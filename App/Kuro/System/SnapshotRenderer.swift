@@ -159,6 +159,8 @@ private struct OnDesktop<Content: View>: View {
     var body: some View {
         content
             .frame(width: size.width, height: size.height)
+            // One shadow for the whole panel, like the window shadow on screen.
+            .compositingGroup()
             .shadow(color: .black.opacity(0.45), radius: 18, y: 10)
             .padding(28)
             .background {

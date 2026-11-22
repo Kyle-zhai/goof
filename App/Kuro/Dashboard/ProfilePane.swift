@@ -115,12 +115,8 @@ private struct ProfileHero: View {
         let accent = Color(hex: draft.accentHex) ?? KuroColors.accent
         let accentNS = NSColor(hex: draft.accentHex) ?? .systemPink
         Card {
-            ZStack {
-                LinearGradient(colors: [accent, Color(nsColor: accentNS.darker(0.45))],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                RadialGradient(colors: [.white.opacity(0.32), .clear], center: .topTrailing, startRadius: 0, endRadius: 320)
-            }
-            .frame(height: 92)
+            LinearGradient.accentBanner(accentNS)
+                .frame(height: 92)
 
             HStack(alignment: .top, spacing: 14) {
                 // Space for the avatar, which hangs over the banner.

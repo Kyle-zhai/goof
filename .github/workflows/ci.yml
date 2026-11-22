@@ -117,3 +117,8 @@ jobs:
             base64 -i "/tmp/readme-$name.jpg" | fold -w 2000
             echo "=== END readme-$name ==="
           done
+          for name in panel-capsule dashboard-profile-dark; do
+            echo "=== BEGIN png-$name ==="
+            base64 -i "snapshots/$name.png" | fold -w 2000
+            echo "=== END png-$name ==="
+          done

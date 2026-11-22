@@ -113,9 +113,7 @@ private struct NowCard: View {
             .foregroundStyle(.white)
             .background {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(LinearGradient(colors: [Color(nsColor: tint.blended(withFraction: 0.08, of: .white) ?? tint),
-                                                  Color(nsColor: tint.darker(0.32))],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient.accentBanner(tint))
             }
         } else {
             Card {

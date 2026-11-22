@@ -41,6 +41,15 @@ struct Card<Content: View>: View {
     }
 }
 
+extension LinearGradient {
+    /// The colored banner behind the current room and the profile header.
+    static func accentBanner(_ tint: NSColor) -> LinearGradient {
+        LinearGradient(colors: [Color(nsColor: tint.blended(withFraction: 0.08, of: .white) ?? tint),
+                                Color(nsColor: tint.darker(0.32))],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
 struct SettingsSection<Content: View>: View {
     let title: String
     var footer: String?

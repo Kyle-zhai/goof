@@ -25,7 +25,9 @@ struct DashboardView: View {
         HStack(spacing: 0) {
             DashboardSidebar()
                 .frame(width: 216)
+            // On an opaque base, so the line looks the same over any window background.
             Rectangle().fill(Palette.separator).frame(width: 1)
+                .background(Palette.paneBackground)
             PaneContainer(pane: model.dashboardPane)
         }
         .ignoresSafeArea()
