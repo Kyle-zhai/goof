@@ -367,7 +367,7 @@ private struct PanelCapsule: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background { PanelBackground() }
         .clipShape(Capsule())
-        .overlay { Capsule().strokeBorder(Color.white.opacity(0.14), lineWidth: 1) }
+        .overlay { CapsuleOutline().strokeBorder(Color.white.opacity(0.14), lineWidth: 1) }
         .overlay {
             if !model.isSnapshot {
                 WindowDragArea(toolTip: "点击展开，拖动移动") { model.setCollapsed(false) }
@@ -376,5 +376,29 @@ private struct PanelCapsule: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { model.setCollapsed(false) }
+    }
+}
+
+/// A capsule built from two arcs. Stroking `Capsule()` itself drew short
+/// straight lines just outside its round ends in offscreen renders.
+private struct CapsuleOutline: InsettableShape {
+    var insetAmount: CGFloat = 0
+
+    func path(in rect: CGRect) -> Path {
+        let rect = rect.insetBy(dx: insetAmount, dy: insetAmount)
+        let radius = min(rect.width, rect.height) / 2
+        var path = Path()
+        path.addArc(center: CGPoint(x: rect.minX + radius, y: rect.midY), radius: radius,
+                    startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
+        path.addArc(center: CGPoint(x: rect.maxX - radius, y: rect.midY), radius: radius,
+                    startAngle: .degrees(270), endAngle: .degrees(450), clockwise: false)
+        path.closeSubpath()
+        return path
+    }
+
+    func inset(by amount: CGFloat) -> CapsuleOutline {
+        var shape = self
+        shape.insetAmount += amount
+        return shape
     }
 }
