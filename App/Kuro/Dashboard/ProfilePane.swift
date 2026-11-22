@@ -213,8 +213,10 @@ private struct AccentPicker: View {
                         Circle()
                             .fill(Color(hex: preset) ?? .gray)
                             .frame(width: 24, height: 24)
+                            // Keeps dark presets visible on a dark background.
+                            .overlay { Circle().strokeBorder(Color.primary.opacity(0.18), lineWidth: 1) }
                             .overlay { Circle().strokeBorder(.white, lineWidth: selected ? 2.5 : 0) }
-                            .overlay { Circle().strokeBorder(Color(hex: preset) ?? .gray, lineWidth: selected ? 1.5 : 0).padding(-3) }
+                            .overlay { Circle().strokeBorder(Color.primary.opacity(0.55), lineWidth: selected ? 1.5 : 0).padding(-3) }
                             .contentShape(Circle())
                     }
                     .buttonStyle(.plain)

@@ -10,6 +10,11 @@ enum SnapshotRenderer {
     static var isRequested: Bool { CommandLine.arguments.contains("--snapshot") }
 
     static func run() {
+        // Draw controls the way they look in the frontmost app (colored switches,
+        // default buttons) rather than in their inactive gray.
+        NSApp.activate()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("KuroSnapshots", isDirectory: true)
         try? FileManager.default.removeItem(at: directory)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -112,7 +117,7 @@ enum SnapshotRenderer {
         host.frame = NSRect(origin: .zero, size: fitting)
         host.appearance = NSAppearance(named: appearance)
 
-        let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        let window = SnapshotWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.appearance = NSAppearance(named: appearance)
         window.contentView = host
@@ -136,6 +141,15 @@ enum SnapshotRenderer {
         }
         window.close()
     }
+}
+
+/// An offscreen window that reports itself as the key window, so controls in it
+/// draw in their active colors.
+private final class SnapshotWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+    override var isKeyWindow: Bool { true }
+    override var isMainWindow: Bool { true }
 }
 
 /// A piece of desktop wallpaper behind the panel, so the translucent panel

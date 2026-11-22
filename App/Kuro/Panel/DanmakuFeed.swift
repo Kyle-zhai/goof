@@ -145,24 +145,33 @@ final class DanmakuFeed {
 
     // MARK: Snapshots
 
-    /// Lays out a frozen, deterministic frame for screenshots.
+    /// Lays out a frozen, deterministic frame for screenshots: the messages go
+    /// through the real lane layout as if they had just arrived one by one.
     func freezeForSnapshot(_ messages: [ChatMessage], panelWidth: Double, height: Double) {
         clearAll()
         resize(width: panelWidth, height: height)
-        let now = Date()
         switch style {
         case .scroll:
-            let lanes = self.lanes(forHeight: height)
+            // Irregular gaps between arrivals, like a real room.
+            let gaps: [TimeInterval] = [0.5, 0.35, 0.6, 0.3, 0.55, 0.4, 0.65, 0.35, 0.5, 0.45]
+            var clock = Date()
+            var placed: [DanmakuItem] = []
             for (index, message) in messages.enumerated() {
                 let width = self.width(of: message)
-                let duration = (panelWidth + width) / layout.speed
-                let lane = index % lanes
-                let round = Double(index / lanes)
-                // Spread items across the panel so the frame looks like a busy room.
-                let progress = 0.18 + 0.27 * round + Double(lane % 2) * 0.12
-                items.append(DanmakuItem(id: message.id, message: message, lane: lane,
-                                         start: now.addingTimeInterval(-progress * duration), duration: duration, width: width))
+                var placement = layout.place(width: width, at: clock)
+                var waits = 0
+                while placement == nil, waits < 100 {
+                    clock.addTimeInterval(0.1)
+                    waits += 1
+                    placement = layout.place(width: width, at: clock)
+                }
+                guard let placement else { continue }
+                placed.append(DanmakuItem(id: message.id, message: message, lane: placement.lane,
+                                          start: placement.startTime, duration: placement.duration, width: width))
+                clock.addTimeInterval(gaps[index % gaps.count])
             }
+            let now = clock.addingTimeInterval(0.4)
+            items = placed.filter { now.timeIntervalSince($0.start) < $0.duration }
             pausedAt = now
         case .stack:
             rows = Array(messages.suffix(maxRows))

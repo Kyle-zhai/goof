@@ -19,7 +19,7 @@ struct AppearancePane: View {
                         }
                     }
                 }
-                if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, settings.danmakuStyle == .scroll {
+                if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, settings.danmakuStyle == .scroll, !model.isSnapshot {
                     Label("系统开启了「减弱动态效果」，推荐用「规整列表」", systemImage: "figure.walk.motion")
                         .font(.system(size: 11.5))
                         .foregroundStyle(.secondary)

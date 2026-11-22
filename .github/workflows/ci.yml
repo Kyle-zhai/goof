@@ -44,7 +44,8 @@ jobs:
         run: |
           app=build/Build/Products/Debug/Kuro.app
           codesign --force --deep --sign - "$app"
-          perl -e 'alarm 120; exec @ARGV' "$app/Contents/MacOS/Kuro" --snapshot | tee snapshot.log
+          # Overlay scroll bars, as on a Mac with a trackpad.
+          perl -e 'alarm 120; exec @ARGV' "$app/Contents/MacOS/Kuro" --snapshot -AppleShowScrollBars WhenScrolling | tee snapshot.log
           dir=$(sed -n 's/^KURO_SNAPSHOTS=//p' snapshot.log | tail -1)
           test -n "$dir"
           mkdir -p snapshots
@@ -106,4 +107,17 @@ jobs:
             echo "=== BEGIN $name ==="
             base64 -i "/tmp/$name.jpg" | fold -w 2000
             echo "=== END $name ==="
+          done
+
+      # TEMPORARY: full-size copies for the README, removed once docs/images is in.
+      - name: Print README images
+        if: steps.snapshots.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          for name in panel-scroll panel-stack dashboard-apps; do
+            sips -s format jpeg -s formatOptions 90 "snapshots/$name.png" --out "/tmp/readme-$name.jpg" >/dev/null
+            echo "=== BEGIN readme-$name ==="
+            base64 -i "/tmp/readme-$name.jpg" | fold -w 2000
+            echo "=== END readme-$name ==="
           done

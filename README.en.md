@@ -33,7 +33,7 @@ Kuro lives in the menu bar. While you work in Figma it puts you in the Figma roo
 - **Hover to pause** the danmaku; right-click a message to report, block or copy it.
 - **Anonymous or named.** Anonymous messages show a random alias such as "匿名 · 橘猫·3f2" that changes per room and per day.
 - **A livestream-style profile**: nickname, username, avatar, bio and accent color.
-- **Hidden during screen sharing**, so meetings stay unembarrassing.
+- **Kept out of screen sharing and recordings**: people in your meeting don't see the panel, while you still do.
 - Launch at login, multiple displays, dark mode and input methods are all handled. Scrolling runs on Core Animation, so an idle panel uses no CPU.
 
 <p align="center">

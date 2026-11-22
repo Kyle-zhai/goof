@@ -37,10 +37,19 @@ final class DanmakuScrollNSView: NSView {
     private var laidOutWidth: CGFloat = 0
     private static let animationKey = "scroll"
 
+    /// Holds the bubbles; its mask softens the left and right edges.
+    private let contentLayer = CALayer()
+    private let edgeMask = CAGradientLayer()
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
         layer?.masksToBounds = true
+        edgeMask.startPoint = CGPoint(x: 0, y: 0.5)
+        edgeMask.endPoint = CGPoint(x: 1, y: 0.5)
+        edgeMask.colors = [NSColor.clear.cgColor, NSColor.black.cgColor, NSColor.black.cgColor, NSColor.clear.cgColor]
+        contentLayer.mask = edgeMask
+        layer?.addSublayer(contentLayer)
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -78,7 +87,7 @@ final class DanmakuScrollNSView: NSView {
             } else if let layer = makeLayer(for: item.message) {
                 let entry = Entry(item: item, layer: layer)
                 entries[item.id] = entry
-                self.layer?.addSublayer(layer)
+                contentLayer.addSublayer(layer)
                 position(entry)
                 apply(entry, at: now)
             }
@@ -91,6 +100,10 @@ final class DanmakuScrollNSView: NSView {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        contentLayer.frame = bounds
+        edgeMask.frame = contentLayer.bounds
+        let fade = bounds.width > 0 ? Double(min(0.2, DanmakuEdgeFade.width / bounds.width)) : 0
+        edgeMask.locations = [0, NSNumber(value: fade), NSNumber(value: 1 - fade), 1]
         let widthChanged = bounds.width != laidOutWidth
         laidOutWidth = bounds.width
         let now = Date()
@@ -215,9 +228,20 @@ struct FrozenDanmakuLayer: View {
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+            .mask {
+                let fade = proxy.size.width > 0 ? min(0.2, DanmakuEdgeFade.width / proxy.size.width) : 0
+                LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: fade),
+                                       .init(color: .black, location: 1 - fade), .init(color: .clear, location: 1)],
+                               startPoint: .leading, endPoint: .trailing)
+            }
         }
         .clipped()
     }
+}
+
+/// How far danmaku fade in at the right edge and out at the left edge.
+enum DanmakuEdgeFade {
+    static let width: CGFloat = 14
 }
 
 /// The right-click menu for a message, shared by both styles' AppKit paths.

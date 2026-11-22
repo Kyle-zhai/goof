@@ -110,6 +110,10 @@ struct OnboardingView: View {
         .padding(.top, 52)
     }
 
+    private var hasNickname: Bool {
+        !nickname.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     private var identity: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
@@ -122,15 +126,19 @@ struct OnboardingView: View {
             Card {
                 VStack(alignment: .leading, spacing: 14) {
                     LimitedField(label: "昵称", prompt: "例如：阿柚", text: $nickname, limit: LocalProfile.maxDisplayName)
-                    Toggle(isOn: $anonymous) {
+                    HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("默认匿名发言").font(.system(size: 13, weight: .medium))
-                            Text("面板里随时可以点面具按钮切换").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                            Text(hasNickname ? "面板里随时可以点面具按钮切换" : "没有昵称时只能匿名发言")
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(.secondary)
                         }
+                        Spacer(minLength: 12)
+                        // Without a nickname you can only post anonymously, so show it as on.
+                        SwitchToggle(label: "默认匿名发言",
+                                     isOn: Binding(get: { anonymous || !hasNickname }, set: { anonymous = $0 }))
+                            .disabled(!hasNickname)
                     }
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .disabled(nickname.trimmingCharacters(in: .whitespaces).isEmpty)
                     DanmakuPreviewStrip(messages: [previewMessage])
                 }
                 .padding(16)

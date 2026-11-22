@@ -1,140 +1,145 @@
-# Kuro 架构与计划
+# Kuro 设计说明
 
-Kuro 是一个 macOS 菜单栏应用：它知道你此刻在用哪个应用，把你放进「正在用同一个应用的所有人」的房间，在一个小小的悬浮面板里用弹幕的方式实时聊天。
+Kuro 是一个 macOS 菜单栏应用：它知道你此刻在用哪个应用，把你放进「正在用同一个应用的人」的房间，在一个小小的悬浮面板里用弹幕聊天。
 
-本文是第一版设计，目的是在深入开发前先对齐方向。
+这个仓库只有客户端。所有和服务器有关的事情都经过 [`ChatService`](../App/Kuro/Chat/ChatService.swift) 协议；没有接服务器时，`DemoChatService` 在本机模拟房间，界面会标「演示」。接入方法见 [BACKEND.md](BACKEND.md)。
 
----
+## 1. 三个界面
 
-## 1. 产品形态
-
-| 部分 | 说明 |
+| 界面 | 实现 |
 | --- | --- |
-| 菜单栏图标 | 常驻，显示当前房间和在线人数；可以开关面板、打开 Dashboard、暂停 Kuro。不在 Dock 显示（`LSUIElement`）。 |
-| 悬浮面板 | 小尺寸、可拖动、可折叠成一个小胶囊、总在最前。弹幕只在面板内部从右向左滚动；底部是输入框；顶部显示房间名和在线人数。 |
-| Dashboard 窗口 | 三个页面：**应用**（勾选允许加入房间的应用）、**个人资料**（用户名、头像、简介、头像框颜色，像直播账号）、**隐私与安全**（默认匿名/实名、屏蔽列表、空闲判定时长、暂停）。 |
+| 菜单栏 | `MenuBarExtra`。显示当前房间和在线人数，可以切换弹幕样式、暂停、打开 Dashboard。应用不在 Dock 里出现（`LSUIElement`）。 |
+| 悬浮面板 | 无边框的 `NSPanel`，带 `.nonactivatingPanel`，浮在所有窗口和全屏应用之上，跟随你切换桌面。可以拖动、缩放，收起成一个显示未读数的小胶囊。 |
+| Dashboard | 普通窗口：应用、个人资料、弹幕外观、隐私与安全、通用五页，第一次启动时先显示三步引导。打开时应用临时出现在 Dock 和 ⌘Tab 里，关掉后回到你之前用的应用。 |
 
-面板使用 `NSPanel` + `.nonactivatingPanel`：点进输入框打字时，**你正在用的应用依然是前台应用**，所以不会因为打字把自己踢出房间。这是检测方案能成立的关键细节。
+面板是「不激活」的：点进输入框打字时，前台应用仍然是你正在用的那个，所以打字不会把你踢出房间。这是整个检测方案能成立的前提。
 
----
+## 2. 怎么判断「你在用什么」
 
-## 2. 「你在用什么」的检测方案
+目标：判断准确、不需要任何系统权限、不碰隐私、不来回抖动。
 
-目标：判断准确、零额外权限、尊重隐私、不抖动。
+### 2.1 只读两个信号
 
-### 2.1 信号
+1. **前台应用**：`NSWorkspace.didActivateApplicationNotification` 推送的 bundle id。
+2. **距离上次输入的秒数**：`CGEventSource.secondsSinceLastEventType`，每秒读一次。它只是一个数字，不包含按了什么键。
 
-1. **前台应用**：`NSWorkspace.didActivateApplicationNotification`，拿到 `bundleIdentifier`（例如 `com.anthropic.claudefordesktop`）。这是事件推送，不需要轮询，也**不需要任何系统权限**（不需要辅助功能、不需要屏幕录制）。
-2. **是否真的在用**：`CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .null)` 读取「距离上次键盘/鼠标输入的秒数」，每 5 秒读一次。同样不需要权限（它只给一个时间数，不读按键内容）。
-3. **离开电脑**：锁屏（`com.apple.screenIsLocked` 分布式通知）、休眠（`NSWorkspace.willSleepNotification`）、屏保启动、切换用户（`sessionDidResignActive`）都立刻视为离开。
+另外，锁屏、睡眠、屏幕关闭、屏保、切换用户都会立刻算作离开。
 
-### 2.2 状态机（`KuroCore/RoomResolver`）
+Kuro 自己和系统界面（Dock、Spotlight、通知中心、登录窗口等）出现在前台时不算切走，见 `AppCatalog.ignoredBundleIDs`。
 
-```
-             前台是白名单应用 且 已稳定 3s
-   [无房间] ──────────────────────────────▶ [在房间 A]
-      ▲                                       │
-      │  宽限期 45s 到期                       │ 切走 / 空闲 > 2min / 锁屏
-      │                                       ▼
-      └──────────────────────────────── [离开中 A（宽限）]
-                                              │ 宽限期内切回 A
-                                              └──────────▶ [在房间 A]
-```
+### 2.2 状态机
 
-- **防抖 3 秒**：Cmd-Tab 快速扫过几个应用时不会进出一串房间。
-- **宽限期 45 秒**：短暂切到浏览器查个东西再回来，你一直在房间里、面板不闪、历史不重载。宽限期内在线列表里你显示为「离开」。
-- **空闲 2 分钟**（可在 Dashboard 调）：前台虽然是 Figma，但人已经走开了，就不计入在线人数。
-- **Kuro 自己**、系统 UI（Dock、登录窗口、Spotlight 等）永远不算「切走」，不会触发离开。
-- 状态机是纯 Swift、不依赖 AppKit，输入是「事件 + 时间」，便于单元测试（见 `KuroCoreTests`）。
-
-### 2.3 为什么不用更「聪明」的方案
-
-- 读窗口标题 / 当前文件 / 网页 URL：需要辅助功能或屏幕录制权限，而且会泄露非常敏感的信息。Kuro 的房间粒度就是「应用」，不需要。
-- 浏览器里的网站（比如网页版 Figma）：第一版不做。之后如果要做，可以做一个可选的浏览器扩展，只上报白名单域名。
-
----
-
-## 3. 隐私模型
-
-- **只有你勾选的应用**才会让你进入房间。默认白名单是一批不敏感的工作应用（Claude、Figma、VS Code、Cursor、Xcode、Notion、Linear、Slack…），且全部默认**关闭**，首次启动在引导里让用户自己勾。
-- 不在白名单内的应用：**不上报任何东西**，连「你在用一个不在白名单里的应用」都不上报（客户端直接视为无房间）。
-- **别人永远看不到你在用什么应用**。服务器端没有「某人在哪个房间」的公开查询；在线状态只在房间频道内广播，你只能看到你自己所在房间的在线人数和成员。个人资料页不包含任何应用信息。
-- 同一个房间里的人天然知道「这些人也在用这个应用」，这是产品本身。所以实名模式下，同房间的人能看到你的昵称；匿名模式下，在线列表里也只显示匿名昵称，presence 的 key 是每次启动随机生成的，不带账号 id。
-- **匿名发言**：别人只能看到「匿名 · 某某动物」这类当天、当房间有效的随机昵称，无法关联到你的账号；服务器保留真实 user_id 仅用于举报和封禁。
-- 房间是按应用 bundle id 划分的公共频道，频道名是 `room:<bundle id>`。
-
----
-
-## 4. 后端：Supabase
-
-选它的理由：一个服务同时解决 **登录（含 Sign in with Apple）**、**实时通道（Broadcast + Presence）**、**Postgres（资料、短历史、举报、屏蔽）**、**行级安全（RLS）**，有官方 Swift SDK，前期免运维。
-
-### 4.1 组成
-
-| 能力 | 用法 |
-| --- | --- |
-| Auth | Sign in with Apple（主）+ 邮箱 Magic Link（备）。 |
-| Realtime Presence | 每个房间一个私有频道 `room:<bundle id>`，客户端 `track` 自己的状态（显示名、头像、是否匿名、是否离开）。在线人数 = presence 数。 |
-| Realtime Broadcast | 新消息通过数据库触发器 `realtime.broadcast_changes` 广播到房间频道，客户端不能直接往频道里发消息（只能写表），这样限流和过滤在服务器端统一生效。 |
-| Postgres | `profiles`、`messages`、`blocks`、`reports`、`bans`。 |
-| pg_cron | 每 10 分钟删除 24 小时前的消息。 |
-
-### 4.2 消息与历史（参考直播弹幕）
-
-- 消息是**纯实时**的：在线的人通过 Broadcast 立刻收到。
-- 进入房间时，拉取最近 **50 条、且不早于 10 分钟**的消息作为「回放」，用较淡的样式快速滚过，告诉你刚才大家在聊什么。之后只显示实时消息。
-- 服务器只保存 24 小时，过期自动删除。没有无限翻页的聊天记录，这不是 IM。
-- 单条最长 80 字（弹幕要短）。
-
-### 4.3 安全、审核与限流（真产品必须有）
-
-- **限流**（数据库触发器，绕不过去）：每人每房间 3 秒 1 条、每分钟最多 12 条；重复发送相同内容会被拒绝。
-- **内容过滤**：客户端和服务器各做一次长度/空白/控制字符校验；服务器端预留敏感词表 `banned_terms`。之后可接入第三方审核 API（Edge Function）。
-- **举报**：任意消息可举报，写入 `reports`；同一条消息被 3 个不同用户举报后自动隐藏。
-- **屏蔽**：屏蔽某人后，历史和实时消息都不再显示他（匿名消息也能屏蔽：按消息屏蔽，服务器解析到真实用户）。
-- **封禁**：`bans` 表，被封禁用户无法写消息，可设到期时间。
-- **新号限制**：账号创建 10 分钟内不能发言（降低小号刷屏）。
-- 用户名唯一、3–20 字符，有保留词表。
-
----
-
-## 5. 客户端结构
+[`RoomResolver`](../Packages/KuroCore/Sources/KuroCore/RoomResolver.swift) 是纯 Swift 的状态机，输入只有「事件 + 时间」，所以可以完整地单元测试。
 
 ```
-App/Kuro/                    # macOS 应用（SwiftUI + 少量 AppKit）
-  KuroApp.swift              # MenuBarExtra + Dashboard 窗口
-  AppModel.swift             # 全局状态：当前房间、消息、在线、设置
-  Activity/                  # NSWorkspace / CGEventSource 适配层 → 喂给 RoomResolver
-  Panel/                     # NSPanel 悬浮面板 + 弹幕视图 + 输入框
-  Dashboard/                 # 应用勾选、个人资料、隐私
-  Services/                  # ChatService 协议，Supabase 实现 + 本地 Mock 实现
-Packages/KuroCore/           # 纯 Swift 逻辑，可单测
-  RoomResolver               # 检测状态机
-  AppCatalog                 # 白名单
-  DanmakuLayout              # 弹幕轨道分配（不重叠）
-  MessageRules               # 消息校验、客户端限流
-supabase/migrations/         # 数据库结构、RLS、触发器、定时任务
+            开启了的应用在前台，并且稳定 3 秒
+  [不在房间] ─────────────────────────────────▶ [在房间 A]
+      ▲                                           │
+      │ 宽限期 45 秒到了                            │ 切走 / 2 分钟没操作
+      │                                           ▼
+      └──────────────────────────────────── [离开中 A]
+                                                  │ 45 秒内回到 A
+                                                  └────────▶ [在房间 A]
+
+  锁屏、睡眠、暂停 Kuro、关掉这个应用的开关：立刻离开
 ```
 
-- 没配置 Supabase 时，自动使用 **Mock 服务**（本地假用户 + 假消息），可以直接运行看 UI 和检测效果。
-- 工程用 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 生成（`project.yml`），避免 `.xcodeproj` 合并冲突。
+- **防抖 3 秒**：⌘Tab 快速扫过几个应用时，不会进出一串房间。
+- **宽限期 45 秒**：切到别的应用查个东西再回来，你一直在房间里，面板不闪、回放不重载。这段时间你在在线列表里显示为「离开」，面板上有倒计时。
+- **空闲阈值**：默认 2 分钟，可以在 Dashboard 里改成 1、5 或 10 分钟。人走开了，就不算在线。
 
----
+### 2.3 为什么不做得更「聪明」
 
-## 6. 路线图
+读窗口标题、当前文件或网页地址都需要辅助功能或屏幕录制权限，而且会碰到非常敏感的信息。Kuro 的房间粒度就是「应用」，这些都用不上，所以也不申请。
 
-| 阶段 | 内容 |
-| --- | --- |
-| **M0 骨架**（本 PR） | 架构文档、工程骨架、检测状态机 + 单测、悬浮面板 + 弹幕、Dashboard 三个页面、Mock 服务、数据库迁移初稿。 |
-| M1 联网 | Supabase 项目、Sign in with Apple、真实 Presence/Broadcast、历史回放、头像上传（Storage）。 |
-| M2 安全 | 举报/屏蔽/封禁 UI、服务器端敏感词、新号限制、管理后台（先用 Supabase Studio）。 |
-| M3 打磨 | 引导流程、开机自启（`SMAppService`）、面板主题和透明度、弹幕密度/速度设置、快捷键唤起输入框、本地化（中/英）。 |
-| M4 发布 | Developer ID 签名 + 公证、Sparkle 自动更新、官网、隐私政策。 |
+## 3. 房间和白名单
 
----
+- 房间只来自 [`AppCatalog`](../Packages/KuroCore/Sources/KuroCore/AppCatalog.swift) 里的应用，每个应用有一个稳定的 id（比如 `figma`），这个 id 就是房间 id。
+- 同一个应用的不同版本共用一个房间：VS Code 和 VS Code Insiders、IntelliJ 旗舰版和社区版等，都写在同一个条目的 `bundleIDs` 里。
+- 白名单只收「被人看到在用也无所谓」的工作类应用。浏览器、聊天、邮件、金融、健康类应用不收，测试里也会检查。规则见 [CONTRIBUTING.md](../CONTRIBUTING.md#adding-an-app)。
+- 所有应用默认关闭，用户在引导或 Dashboard 里自己开启。
 
-## 7. 需要你决定 / 提供的
+## 4. 弹幕
 
-1. **Apple Developer 账号**：Sign in with Apple 和公证发布都需要（$99/年）。
-2. **Supabase 项目**：可以你建好后给我 URL 和 anon key（anon key 可以公开放在客户端）。
-3. 默认白名单是否要调整（见 `Packages/KuroCore/Sources/KuroCore/AppCatalog.swift`）。
+两种样式随时切换，正在等待显示的消息会带过去。
+
+### 4.1 滚动弹幕
+
+- [`DanmakuLayout`](../Packages/KuroCore/Sources/KuroCore/DanmakuLayout.swift) 分配轨道：所有弹幕速度相同，前一条的尾巴完全进入面板、再留出一点间距后，同一条轨道才放下一条，所以永远不会重叠。轨道都忙时消息排队，队列满了丢掉最旧的，像热闹的直播间一样。
+- 每条弹幕先画成一张位图（`DanmakuBubble`），然后交给 Core Animation 从右移到左（`DanmakuScrollLayer`）。动画在系统的渲染进程里跑，Kuro 不需要每帧醒来，空闲时不占 CPU。
+- 鼠标停在弹幕上会冻结所有图层，方便阅读和右键；离开后从原位置继续，轨道的时间也一起顺延。
+
+### 4.2 规整列表
+
+一条条从下往上排，顶部渐隐。[`MessagePacer`](../Packages/KuroCore/Sources/KuroCore/MessagePacer.swift) 控制节奏：平时每 0.35 秒放一条，积压多了加快，避免一大批消息同时跳出来。
+
+### 4.3 回放和节能
+
+- 进入房间时，服务器返回的最近消息以半透明的「回放」样式先过一遍，之后只显示实时消息。
+- 驱动弹幕的定时器只在有东西在动或在排队时运行，安静的房间里不会唤醒 CPU。
+
+## 5. 焦点和键盘
+
+- **⌃⌥⌘K**：用 Carbon 的 `RegisterEventHotKey` 注册全局快捷键，不需要辅助功能权限。按下后把光标放进面板的输入框。
+- **Esc**：离开输入框并把焦点还给原来的应用。用中文输入法选字时按 Esc 只会取消选字，不会离开。
+- 面板和 Dashboard 里的 ⌘X、⌘C、⌘V、⌘A、⌘Z 都能正常用（菜单栏应用没有「编辑」菜单，需要自己转发）。
+
+## 6. 数据和隐私
+
+| 数据 | 存在哪 | 会发给服务器吗 |
+| --- | --- | --- |
+| 开启了哪些应用、弹幕外观、空闲阈值、暂停到什么时候 | 本机 `UserDefaults` | 不会 |
+| 当前前台的白名单应用（用来在菜单里提示「在 Figma 里开启弹幕」） | 只在内存里 | 不会 |
+| 个人资料（昵称、用户名、简介、主题色） | 本机 `UserDefaults` | 会，作为公开资料 |
+| 头像 | 应用沙盒里的 `Application Support/Kuro/avatar.png`，256×256 | 会，作为公开资料 |
+| 当前房间 id、在线和离开状态 | 不保存 | 会，这是房间本身 |
+| 发出的弹幕 | 不保存 | 会 |
+
+- 不在白名单里的应用，Kuro 不记录、也不上报，连「你在用一个不在白名单里的应用」都不会说。
+- 别人看不到你在用哪些应用，只能看到同一个房间里的人。服务器需要遵守的规则见 [BACKEND.md](BACKEND.md#3-服务器必须保证的事)。
+- 「屏幕共享和录屏时隐藏面板」使用 `NSWindow.sharingType = .none`。个别不遵守这个设置的录屏工具仍可能录到面板。
+- 应用开启了 App Sandbox，只申请了网络访问和「读取用户选择的文件」（选头像）。
+
+## 7. 和服务器的接口
+
+- [`AppModel`](../App/Kuro/AppModel.swift) 是唯一调用 `ChatService` 的地方。
+- 进入、离开、离开中、匿名切换、资料更新这几个调用排成一个队列，一个结束才开始下一个（`enqueue`）。快速离开再进入时，服务器看到的顺序不会乱。
+- 服务器通过 `onEvent` 推送新消息、被隐藏的消息和在线列表。客户端按消息 id 去重，所以自己发的消息被广播回来也没关系。
+- 发送前客户端先做长度、空白和频率检查（[`MessageRules`](../Packages/KuroCore/Sources/KuroCore/MessageRules.swift)），但服务器必须自己再检查一遍。
+
+## 8. 代码结构
+
+```
+App/Kuro/
+  KuroApp.swift          菜单栏、应用入口、单实例
+  AppModel.swift         全局状态：房间、在线、通知提示、所有设置的修改入口
+  Activity/              前台应用、空闲和锁屏检测，喂给 RoomResolver
+  Chat/                  ChatService 协议、消息模型、本地演示后端
+  Panel/                 悬浮面板：滚动弹幕、规整列表、输入框、拖动和缩放
+  Dashboard/             设置窗口和首次引导
+  Settings/              本机设置和个人资料
+  Support/               颜色、应用图标缓存、稳定哈希（匿名昵称）
+  System/                全局快捷键、开机启动、编辑快捷键、截图渲染
+Packages/KuroCore/       不依赖 AppKit 的逻辑和单元测试
+  RoomResolver           在线判定状态机
+  AppCatalog             白名单和 bundle id 归类
+  DanmakuLayout          滚动弹幕的轨道分配
+  MessagePacer           规整列表的节奏
+  MessageRules           消息校验和客户端限流
+  PauseDuration          「暂停 Kuro」的时长
+```
+
+工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 从 `project.yml` 生成，`.xcodeproj` 不进 git。不需要 Apple 开发者账号，默认用本机签名。
+
+## 9. 测试和截图
+
+- `swift test --package-path Packages/KuroCore` 跑核心逻辑的单元测试。
+- `Kuro --snapshot` 用演示数据把面板（两种样式和收起状态）、Dashboard 的每一页（浅色和深色）和引导渲染成 PNG，然后退出。它不碰真实设置，也不连接服务器。
+- CI 在 macOS 上跑测试、编译、渲染截图，并把截图作为 artifacts 上传；改界面时可以下载对比。打 `v*` 标签时，另一个工作流会编译通用二进制并发布到 Releases。
+
+## 10. 之后可以做的
+
+- 英文界面（文字目前都写在代码里，需要先抽成 String Catalog）。
+- Developer ID 签名、公证和自动更新（例如 Sparkle），这样下载的版本不会被系统拦。
+- 一个可以直接部署的参考后端。
+- VoiceOver 和键盘导航的完整支持。
