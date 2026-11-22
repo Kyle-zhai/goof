@@ -1,0 +1,57 @@
+name: Kuro
+options:
+  bundleIdPrefix: app.kuro
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+packages:
+  KuroCore:
+    path: Packages/KuroCore
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.20.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Kuro:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/Kuro
+    dependencies:
+      - package: KuroCore
+      - package: Supabase
+        product: Supabase
+    info:
+      path: App/Kuro/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Kuro
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.social-networking
+        NSHumanReadableCopyright: "© 2026 Kuro"
+        KuroSupabaseURL: $(KURO_SUPABASE_URL)
+        KuroSupabaseAnonKey: $(KURO_SUPABASE_ANON_KEY)
+    entitlements:
+      path: App/Kuro/Resources/Kuro.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.developer.applesignin: [Default]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.kuro.Kuro
+        PRODUCT_NAME: Kuro
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_STYLE: Automatic
+      # KURO_SUPABASE_URL / KURO_SUPABASE_ANON_KEY come from Config.xcconfig (git-ignored).
+    configFiles:
+        Debug: Config.xcconfig
+        Release: Config.xcconfig
+schemes:
+  Kuro:
+    build:
+      targets:
+        Kuro: all

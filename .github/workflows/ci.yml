@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app || true
+      - name: KuroCore tests
+        run: swift test --package-path Packages/KuroCore
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          ./scripts/bootstrap.sh
+      - name: Build app
+        run: |
+          xcodebuild -project Kuro.xcodeproj -scheme Kuro -configuration Debug \
+            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build | xcbeautify || exit ${PIPESTATUS[0]}

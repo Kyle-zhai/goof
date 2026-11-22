@@ -1,0 +1,5 @@
+// Copy to Config.xcconfig (git-ignored) and fill in. Leave empty to run with the offline mock backend.
+// Note: in xcconfig, "//" starts a comment, so write URLs as https:/$()/xxx.supabase.co
+KURO_SUPABASE_URL =
+KURO_SUPABASE_ANON_KEY =
+DEVELOPMENT_TEAM =
