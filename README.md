@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/panel-scroll.png" width="400" alt="滚动弹幕">
-  <img src="docs/images/panel-stack.png" width="400" alt="规整列表">
+  <img src="docs/images/panel-scroll.jpg" width="400" alt="滚动弹幕">
+  <img src="docs/images/panel-stack.jpg" width="400" alt="规整列表">
 </p>
 
 Kuro 住在菜单栏里。你在用 Figma，它就把你放进「Figma 房间」；切到 Xcode，就换到「Xcode 房间」。房间里的弹幕只在一个小小的悬浮面板里飘过，不挡你干活。
@@ -37,7 +37,7 @@ Kuro 住在菜单栏里。你在用 Figma，它就把你放进「Figma 房间」
 - 开机启动、多显示器、深色模式和中文输入法都照顾到了。滚动弹幕交给 Core Animation，空闲时不占 CPU。
 
 <p align="center">
-  <img src="docs/images/dashboard.png" width="760" alt="Dashboard">
+  <img src="docs/images/dashboard.jpg" width="760" alt="Dashboard">
 </p>
 
 ## 隐私

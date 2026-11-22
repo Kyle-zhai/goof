@@ -210,14 +210,7 @@ private struct AccentPicker: View {
                     Button {
                         hex = preset
                     } label: {
-                        Circle()
-                            .fill(Color(hex: preset) ?? .gray)
-                            .frame(width: 24, height: 24)
-                            // Keeps dark presets visible on a dark background.
-                            .overlay { Circle().strokeBorder(Color.primary.opacity(0.18), lineWidth: 1) }
-                            .overlay { Circle().strokeBorder(.white, lineWidth: selected ? 2.5 : 0) }
-                            .overlay { Circle().strokeBorder(Color.primary.opacity(0.55), lineWidth: selected ? 1.5 : 0).padding(-3) }
-                            .contentShape(Circle())
+                        AccentSwatch(hex: preset, selected: selected)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("主题色 \(preset)")
@@ -230,6 +223,26 @@ private struct AccentPicker: View {
                     .help("自定义颜色")
             }
         }
+    }
+}
+
+private struct AccentSwatch: View {
+    let hex: String
+    let selected: Bool
+
+    var body: some View {
+        Circle()
+            .fill(Color(hex: hex) ?? .gray)
+            .frame(width: 24, height: 24)
+            // A hairline keeps dark presets visible on a dark background.
+            .overlay { Circle().strokeBorder(Color.primary.opacity(0.18), lineWidth: 1) }
+            .overlay {
+                if selected {
+                    Circle().strokeBorder(Color.white, lineWidth: 2.5)
+                    Circle().strokeBorder(Color.primary.opacity(0.55), lineWidth: 1.5).padding(-3)
+                }
+            }
+            .contentShape(Circle())
     }
 }
 

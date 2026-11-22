@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/panel-scroll.png" width="400" alt="Scrolling danmaku">
-  <img src="docs/images/panel-stack.png" width="400" alt="Stacked list">
+  <img src="docs/images/panel-scroll.jpg" width="400" alt="Scrolling danmaku">
+  <img src="docs/images/panel-stack.jpg" width="400" alt="Stacked list">
 </p>
 
 Kuro lives in the menu bar. While you work in Figma it puts you in the Figma room; switch to Xcode and you are in the Xcode room. Messages drift across a small floating panel ("danmaku", like on a livestream) without getting in your way.
@@ -37,7 +37,7 @@ Kuro lives in the menu bar. While you work in Figma it puts you in the Figma roo
 - Launch at login, multiple displays, dark mode and input methods are all handled. Scrolling runs on Core Animation, so an idle panel uses no CPU.
 
 <p align="center">
-  <img src="docs/images/dashboard.png" width="760" alt="Dashboard">
+  <img src="docs/images/dashboard.jpg" width="760" alt="Dashboard">
 </p>
 
 ## Privacy

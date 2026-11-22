@@ -10,10 +10,12 @@ enum SnapshotRenderer {
     static var isRequested: Bool { CommandLine.arguments.contains("--snapshot") }
 
     static func run() {
-        // Draw controls the way they look in the frontmost app (colored switches,
-        // default buttons) rather than in their inactive gray.
+        // Controls only draw in their active colors (switches, default buttons)
+        // in the key window of the frontmost app. CI launches Kuro with `open`,
+        // which makes it frontmost; each snapshot window then becomes key.
         NSApp.activate()
         RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        print("snapshot: app is \(NSApp.isActive ? "active" : "not active")")
 
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("KuroSnapshots", isDirectory: true)
         try? FileManager.default.removeItem(at: directory)
@@ -122,6 +124,7 @@ enum SnapshotRenderer {
         window.appearance = NSAppearance(named: appearance)
         window.contentView = host
         window.setFrameOrigin(NSPoint(x: -20_000, y: -20_000))
+        window.makeKeyAndOrderFront(nil)
 
         // Let SwiftUI lay out, load images and run onAppear.
         host.layoutSubtreeIfNeeded()
@@ -139,17 +142,15 @@ enum SnapshotRenderer {
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: directory.appendingPathComponent("\(name).png"))
         }
+        window.orderOut(nil)
         window.close()
     }
 }
 
-/// An offscreen window that reports itself as the key window, so controls in it
-/// draw in their active colors.
+/// An offscreen borderless window that can still become key.
 private final class SnapshotWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
-    override var isKeyWindow: Bool { true }
-    override var isMainWindow: Bool { true }
 }
 
 /// A piece of desktop wallpaper behind the panel, so the translucent panel
