@@ -1,19 +1,19 @@
 import Foundation
 
 /// Decides which room (if any) the user is in, from three raw signals:
-/// the frontmost app, how long the user has been idle, and whether the
-/// session is away (screen locked / asleep / switched user).
+/// which catalog app is frontmost, how long the user has been idle, and
+/// whether the session is away (screen locked, asleep, user switched).
 ///
-/// Pure value type with no AppKit dependency so it can be unit tested by
+/// A pure value type with no AppKit dependency, so it can be unit tested by
 /// feeding it events and timestamps. The app calls `tick(at:)` about once a
-/// second so that debounce and grace timers can expire.
+/// second so the debounce and grace timers can expire.
 public struct RoomResolver: Sendable {
     public struct Config: Sendable, Equatable {
         /// A newly frontmost app must stay frontmost this long before we join its room.
         public var debounce: TimeInterval
         /// After leaving, keep the room (shown as "away") this long before exiting.
         public var grace: TimeInterval
-        /// No keyboard/mouse input for this long means the user is not really "using" the app.
+        /// No keyboard or mouse input for this long means the user is not really using the app.
         public var idleThreshold: TimeInterval
 
         public init(debounce: TimeInterval = 3, grace: TimeInterval = 45, idleThreshold: TimeInterval = 120) {
@@ -28,7 +28,7 @@ public struct RoomResolver: Sendable {
         case none
         /// In the room and actively using the app.
         case active(roomID: String)
-        /// Still in the room (grace period) but not currently using the app.
+        /// Still in the room (grace period) but not using the app right now.
         case away(roomID: String)
 
         public var roomID: String? {
@@ -40,31 +40,40 @@ public struct RoomResolver: Sendable {
     }
 
     public var config: Config
-    /// Bundle ids the user has allowed. Anything else never produces a room.
+    /// Room ids the user has allowed. Anything else never produces a room.
     public private(set) var allowed: Set<String>
-    /// Bundle ids that never count as "switching away" (Kuro itself, Dock, Spotlight...).
-    public let ignored: Set<String>
-
     public private(set) var status: Status = .none
+    /// The room the user is about to join, and since when, while the debounce runs.
+    public var pendingRoom: (roomID: String, since: Date)? {
+        guard let candidate, candidate.roomID != status.roomID else { return nil }
+        return candidate
+    }
 
     private var frontmost: String?
     private var idleSeconds: TimeInterval = 0
     private var sessionAway = false
     private var candidate: (roomID: String, since: Date)?
-    private var leftAt: Date?
+    /// When the user stopped using the current room's app (start of the grace period).
+    public private(set) var leftAt: Date?
 
-    public init(config: Config = Config(), allowed: Set<String>, ignored: Set<String> = AppCatalog.ignoredBundleIDs) {
+    public init(config: Config = Config(), allowed: Set<String>) {
         self.config = config
         self.allowed = allowed
-        self.ignored = ignored
+    }
+
+    /// Seconds left before an away user exits the room, or nil when not away.
+    public func graceRemaining(at now: Date) -> TimeInterval? {
+        guard case .away = status, let leftAt else { return nil }
+        return max(0, config.grace - now.timeIntervalSince(leftAt))
     }
 
     // MARK: Inputs
 
+    /// Pass the catalog room id of the frontmost app, or nil for any other app.
+    /// Do not call this for ignored apps (Kuro itself, system UI).
     @discardableResult
-    public mutating func frontmostChanged(to bundleID: String?, at now: Date) -> Status {
-        if let bundleID, ignored.contains(bundleID) { return status }
-        frontmost = bundleID
+    public mutating func frontmostChanged(to roomID: String?, at now: Date) -> Status {
+        frontmost = roomID
         return evaluate(at: now)
     }
 
@@ -83,7 +92,7 @@ public struct RoomResolver: Sendable {
     @discardableResult
     public mutating func setAllowed(_ ids: Set<String>, at now: Date) -> Status {
         allowed = ids
-        // Revoking permission for the current room exits immediately; no grace.
+        // Revoking the current room (or pausing) exits immediately, without a grace period.
         if let room = status.roomID, !ids.contains(room) {
             status = .none
             leftAt = nil
@@ -106,7 +115,7 @@ public struct RoomResolver: Sendable {
     }
 
     private mutating func evaluate(at now: Date) -> Status {
-        // Locked screen / sleep: leave right away so online counts stay honest.
+        // Locked screen or sleep: leave right away so online counts stay honest.
         if sessionAway {
             candidate = nil
             leftAt = nil
@@ -135,7 +144,7 @@ public struct RoomResolver: Sendable {
             return status
         }
 
-        // Not using the current room's app: hold it during the grace period.
+        // Not using the current room's app: hold the room during the grace period.
         if let current {
             let left = leftAt ?? now
             leftAt = left

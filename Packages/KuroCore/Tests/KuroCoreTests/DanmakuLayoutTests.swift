@@ -23,4 +23,20 @@ final class DanmakuLayoutTests: XCTestCase {
         let layout = DanmakuLayout(laneCount: 1, panelWidth: 300, speed: 100, gap: 0)
         XCTAssertEqual(layout.duration(forWidth: 100), 4, accuracy: 0.0001)
     }
+
+    func testDelayShiftsBusyLanesOnly() {
+        var layout = DanmakuLayout(laneCount: 2, panelWidth: 300, speed: 100, gap: 0)
+        XCTAssertEqual(layout.place(width: 100, at: t0)?.lane, 0)   // lane 0 busy until t0 + 1s
+        layout.delay(by: 2)                                         // lane 0 busy until t0 + 3s
+        XCTAssertEqual(layout.place(width: 100, at: t0.addingTimeInterval(1))?.lane, 1)
+        XCTAssertNil(layout.place(width: 100, at: t0.addingTimeInterval(1.5)))
+        XCTAssertEqual(layout.place(width: 100, at: t0.addingTimeInterval(3))?.lane, 0)
+    }
+
+    func testReset() {
+        var layout = DanmakuLayout(laneCount: 1, panelWidth: 300, speed: 100, gap: 0)
+        XCTAssertNotNil(layout.place(width: 100, at: t0))
+        layout.reset()
+        XCTAssertNotNil(layout.place(width: 100, at: t0))
+    }
 }

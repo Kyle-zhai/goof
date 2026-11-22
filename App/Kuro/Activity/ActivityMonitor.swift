@@ -3,44 +3,64 @@ import CoreGraphics
 import KuroCore
 
 /// Feeds real macOS signals into `RoomResolver`:
-/// - frontmost app via NSWorkspace activation notifications (no permission needed)
-/// - idle time via CGEventSource (no permission needed, reads only a timestamp)
-/// - lock / sleep / screensaver / fast user switching
+/// - the frontmost app, from NSWorkspace activation notifications (no permission needed)
+/// - idle time, from CGEventSource (no permission needed; it reads only a timestamp)
+/// - lock, sleep, screensaver and fast user switching
+///
+/// Apps outside the catalog are reported to the resolver as "some other app";
+/// their bundle ids are never stored or sent anywhere.
 @MainActor
 final class ActivityMonitor {
     private(set) var resolver: RoomResolver
+    /// The catalog app in front, allowed or not. Nil for any other app. Kept in
+    /// memory only, so the menu can offer "turn on Figma" while you use Figma.
+    private(set) var frontmostCatalogID: String?
     var onStatusChange: ((RoomResolver.Status) -> Void)?
+    /// The frontmost catalog app or the pending room changed.
+    var onSignalsChange: (() -> Void)?
 
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     private var timer: Timer?
+    private let ownBundleID = Bundle.main.bundleIdentifier
     private var awayReasons: Set<String> = [] {
-        didSet { apply { $0.sessionAwayChanged(!awayReasons.isEmpty, at: Date()) } }
+        didSet {
+            guard awayReasons.isEmpty != oldValue.isEmpty else { return }
+            apply { $0.sessionAwayChanged(!awayReasons.isEmpty, at: Date()) }
+        }
     }
 
     init(allowed: Set<String>, idleThreshold: TimeInterval) {
         resolver = RoomResolver(config: .init(idleThreshold: idleThreshold), allowed: allowed)
     }
 
+    var pendingRoom: (roomID: String, since: Date)? { resolver.pendingRoom }
+
+    func graceRemaining(at now: Date = Date()) -> TimeInterval? {
+        resolver.graceRemaining(at: now)
+    }
+
     func start() {
-        let ws = NSWorkspace.shared.notificationCenter
-        observe(ws, NSWorkspace.didActivateApplicationNotification) { [weak self] note in
+        let workspace = NSWorkspace.shared.notificationCenter
+        observe(workspace, NSWorkspace.didActivateApplicationNotification) { [weak self] note in
             let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
-            self?.apply { $0.frontmostChanged(to: app?.bundleIdentifier, at: Date()) }
+            self?.frontmostChanged(app?.bundleIdentifier)
         }
-        awayWhile(ws, start: NSWorkspace.willSleepNotification, end: NSWorkspace.didWakeNotification, reason: "sleep")
-        awayWhile(ws, start: NSWorkspace.screensDidSleepNotification, end: NSWorkspace.screensDidWakeNotification, reason: "display")
-        awayWhile(ws, start: NSWorkspace.sessionDidResignActiveNotification, end: NSWorkspace.sessionDidBecomeActiveNotification, reason: "session")
+        awayWhile(workspace, start: NSWorkspace.willSleepNotification, end: NSWorkspace.didWakeNotification, reason: "sleep")
+        awayWhile(workspace, start: NSWorkspace.screensDidSleepNotification, end: NSWorkspace.screensDidWakeNotification, reason: "display")
+        awayWhile(workspace, start: NSWorkspace.sessionDidResignActiveNotification, end: NSWorkspace.sessionDidBecomeActiveNotification, reason: "session")
 
-        let dnc = DistributedNotificationCenter.default()
-        awayWhile(dnc, start: .init("com.apple.screenIsLocked"), end: .init("com.apple.screenIsUnlocked"), reason: "locked")
-        awayWhile(dnc, start: .init("com.apple.screensaver.didstart"), end: .init("com.apple.screensaver.didstop"), reason: "screensaver")
+        let distributed = DistributedNotificationCenter.default()
+        awayWhile(distributed, start: .init("com.apple.screenIsLocked"), end: .init("com.apple.screenIsUnlocked"), reason: "locked")
+        awayWhile(distributed, start: .init("com.apple.screensaver.didstart"), end: .init("com.apple.screensaver.didstop"), reason: "screensaver")
 
-        apply { $0.frontmostChanged(to: NSWorkspace.shared.frontmostApplication?.bundleIdentifier, at: Date()) }
+        frontmostChanged(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
 
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
-        timer?.tolerance = 0.3
+        timer.tolerance = 0.3
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
     }
 
     func stop() {
@@ -61,6 +81,20 @@ final class ActivityMonitor {
 
     // MARK: -
 
+    private func frontmostChanged(_ bundleID: String?) {
+        switch AppCatalog.classify(bundleID: bundleID, ownBundleID: ownBundleID) {
+        case .ignored:
+            return
+        case .app(let app):
+            frontmostCatalogID = app.id
+            apply { $0.frontmostChanged(to: app.id, at: Date()) }
+        case .other:
+            frontmostCatalogID = nil
+            apply { $0.frontmostChanged(to: nil, at: Date()) }
+        }
+        onSignalsChange?()
+    }
+
     private func tick() {
         let idle = Self.secondsSinceLastInput()
         apply { $0.idleUpdated(idle, at: Date()) }
@@ -68,15 +102,17 @@ final class ActivityMonitor {
 
     /// Seconds since the last keyboard, mouse or trackpad event in this login session.
     static func secondsSinceLastInput() -> TimeInterval {
-        // kCGAnyInputEventType (~0) is not bridged as a case.
-        guard let any = CGEventType(rawValue: ~0) else { return 0 }
-        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: any)
+        // kCGAnyInputEventType (~0) is not bridged as an enum case.
+        guard let anyInput = CGEventType(rawValue: ~0) else { return 0 }
+        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyInput)
     }
 
     private func apply(_ change: (inout RoomResolver) -> RoomResolver.Status) {
         let before = resolver.status
+        let pendingBefore = resolver.pendingRoom?.roomID
         let after = change(&resolver)
         if after != before { onStatusChange?(after) }
+        if resolver.pendingRoom?.roomID != pendingBefore { onSignalsChange?() }
     }
 
     private func observe(_ center: NotificationCenter, _ name: Notification.Name, _ handler: @escaping @MainActor (Notification) -> Void) {

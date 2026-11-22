@@ -44,6 +44,18 @@ public struct DanmakuLayout: Sendable {
         return Placement(lane: lane, startTime: now, duration: duration(forWidth: width))
     }
 
+    /// Shifts every lane's availability later, used when scrolling is paused
+    /// (for example while the pointer hovers over the danmaku).
+    public mutating func delay(by seconds: TimeInterval) {
+        guard seconds > 0 else { return }
+        laneFreeAt = laneFreeAt.map { $0 == .distantPast ? $0 : $0.addingTimeInterval(seconds) }
+    }
+
+    /// Forgets every placement, for example after switching rooms.
+    public mutating func reset() {
+        laneFreeAt = Array(repeating: .distantPast, count: laneCount)
+    }
+
     /// The earliest time any lane becomes free.
     public var nextFreeTime: Date { laneFreeAt.min() ?? .distantPast }
 

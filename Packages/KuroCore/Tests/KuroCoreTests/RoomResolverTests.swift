@@ -2,9 +2,8 @@ import XCTest
 @testable import KuroCore
 
 final class RoomResolverTests: XCTestCase {
-    let claude = "com.anthropic.claudefordesktop"
-    let figma = "com.figma.Desktop"
-    let safari = "com.apple.Safari"
+    let claude = "claude"
+    let figma = "figma"
     let t0 = Date(timeIntervalSince1970: 1_000_000)
 
     func makeResolver() -> RoomResolver {
@@ -31,7 +30,7 @@ final class RoomResolverTests: XCTestCase {
 
     func testNonAllowedAppNeverJoins() {
         var r = makeResolver()
-        r.frontmostChanged(to: safari, at: t(0))
+        r.frontmostChanged(to: nil, at: t(0))
         XCTAssertEqual(r.tick(at: t(100)), .none)
     }
 
@@ -39,7 +38,7 @@ final class RoomResolverTests: XCTestCase {
         var r = makeResolver()
         r.frontmostChanged(to: claude, at: t(0))
         r.tick(at: t(3))
-        XCTAssertEqual(r.frontmostChanged(to: safari, at: t(10)), .away(roomID: claude))
+        XCTAssertEqual(r.frontmostChanged(to: nil, at: t(10)), .away(roomID: claude))
         XCTAssertEqual(r.tick(at: t(30)), .away(roomID: claude))
         XCTAssertEqual(r.frontmostChanged(to: claude, at: t(40)), .active(roomID: claude), "rejoin needs no debounce")
     }
@@ -48,7 +47,7 @@ final class RoomResolverTests: XCTestCase {
         var r = makeResolver()
         r.frontmostChanged(to: claude, at: t(0))
         r.tick(at: t(3))
-        r.frontmostChanged(to: safari, at: t(10))
+        r.frontmostChanged(to: nil, at: t(10))
         XCTAssertEqual(r.tick(at: t(54)), .away(roomID: claude))
         XCTAssertEqual(r.tick(at: t(55)), .none)
     }
@@ -88,13 +87,34 @@ final class RoomResolverTests: XCTestCase {
         XCTAssertEqual(r.tick(at: t(63)), .active(roomID: claude))
     }
 
-    func testIgnoredAppsDoNotCountAsLeaving() {
+    func testPendingRoomIsExposedDuringDebounce() {
+        var r = makeResolver()
+        r.frontmostChanged(to: figma, at: t(0))
+        XCTAssertEqual(r.pendingRoom?.roomID, figma)
+        r.tick(at: t(3))
+        XCTAssertEqual(r.status, .active(roomID: figma))
+        XCTAssertNil(r.pendingRoom, "nothing is pending once the room is joined")
+    }
+
+    func testGraceRemainingCountsDownWhileAway() {
         var r = makeResolver()
         r.frontmostChanged(to: claude, at: t(0))
         r.tick(at: t(3))
-        XCTAssertEqual(r.frontmostChanged(to: AppCatalog.kuroBundleID, at: t(5)), .active(roomID: claude))
-        XCTAssertEqual(r.frontmostChanged(to: "com.apple.Spotlight", at: t(6)), .active(roomID: claude))
-        XCTAssertEqual(r.tick(at: t(100)), .active(roomID: claude))
+        XCTAssertNil(r.graceRemaining(at: t(3)))
+        r.frontmostChanged(to: nil, at: t(10))
+        XCTAssertEqual(r.graceRemaining(at: t(10)), 45)
+        XCTAssertEqual(r.graceRemaining(at: t(30)), 25)
+        r.frontmostChanged(to: claude, at: t(31))
+        XCTAssertNil(r.graceRemaining(at: t(31)))
+    }
+
+    func testAllowingCurrentAppLaterJoinsAfterDebounce() {
+        var r = RoomResolver(config: .init(debounce: 3, grace: 45, idleThreshold: 120), allowed: [])
+        r.frontmostChanged(to: claude, at: t(0))
+        XCTAssertEqual(r.tick(at: t(10)), .none)
+        r.setAllowed([claude], at: t(10))
+        XCTAssertEqual(r.tick(at: t(12)), .none)
+        XCTAssertEqual(r.tick(at: t(13)), .active(roomID: claude))
     }
 
     func testRevokingPermissionExitsImmediately() {

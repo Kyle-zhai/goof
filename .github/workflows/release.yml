@@ -1,0 +1,48 @@
+name: Release
+
+# Push a tag like v0.1.0 to build Kuro and attach it to a GitHub release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app || true
+
+      - name: Test
+        run: swift test --package-path Packages/KuroCore
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          ./scripts/bootstrap.sh
+
+      - name: Build (universal, ad-hoc signed)
+        shell: bash
+        run: |
+          xcodebuild -project Kuro.xcodeproj -scheme Kuro -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath build \
+            MARKETING_VERSION="${GITHUB_REF_NAME#v}" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            build | xcbeautify
+
+      - name: Package
+        shell: bash
+        run: |
+          ditto -c -k --keepParent build/Build/Products/Release/Kuro.app "Kuro-${GITHUB_REF_NAME}.zip"
+          shasum -a 256 "Kuro-${GITHUB_REF_NAME}.zip" | tee "Kuro-${GITHUB_REF_NAME}.zip.sha256"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "Kuro-${GITHUB_REF_NAME}.zip" "Kuro-${GITHUB_REF_NAME}.zip.sha256" \
+            --title "Kuro ${GITHUB_REF_NAME}" --notes-file .github/release-notes.md --generate-notes

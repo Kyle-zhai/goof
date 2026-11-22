@@ -3,13 +3,11 @@ options:
   bundleIdPrefix: app.kuro
   deploymentTarget:
     macOS: "14.0"
+  developmentLanguage: zh-Hans
   createIntermediateGroups: true
 packages:
   KuroCore:
     path: Packages/KuroCore
-  Supabase:
-    url: https://github.com/supabase/supabase-swift
-    from: "2.20.0"
 settings:
   base:
     SWIFT_VERSION: "5.10"
@@ -23,35 +21,43 @@ targets:
       - path: App/Kuro
     dependencies:
       - package: KuroCore
-      - package: Supabase
-        product: Supabase
     info:
       path: App/Kuro/Resources/Info.plist
       properties:
         CFBundleDisplayName: Kuro
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.social-networking
-        NSHumanReadableCopyright: "© 2026 Kuro"
-        KuroSupabaseURL: $(KURO_SUPABASE_URL)
-        KuroSupabaseAnonKey: $(KURO_SUPABASE_ANON_KEY)
+        NSHumanReadableCopyright: "© 2026 Kuro contributors. MIT License."
     entitlements:
       path: App/Kuro/Resources/Kuro.entitlements
       properties:
         com.apple.security.app-sandbox: true
+        # For a real backend (docs/BACKEND.md). The demo backend never uses the network.
         com.apple.security.network.client: true
-        com.apple.developer.applesignin: [Default]
+        # Picking an avatar image.
+        com.apple.security.files.user-selected.read-only: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.kuro.Kuro
         PRODUCT_NAME: Kuro
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_HARDENED_RUNTIME: true
-        CODE_SIGN_STYLE: Automatic
-      # KURO_SUPABASE_URL / KURO_SUPABASE_ANON_KEY come from Config.xcconfig (git-ignored).
-    configFiles:
-        Debug: Config.xcconfig
-        Release: Config.xcconfig
+        DEAD_CODE_STRIPPING: true
+        # Ad-hoc signing, so anyone can build and run Kuro without an Apple
+        # Developer account. To ship notarized builds, set your own team here.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
 schemes:
   Kuro:
     build:
       targets:
         Kuro: all
+    run:
+      config: Debug
+    archive:
+      config: Release
