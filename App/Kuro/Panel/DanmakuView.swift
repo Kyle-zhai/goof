@@ -16,8 +16,8 @@ struct DanmakuView: View {
                 }
                 .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
             }
-            .onAppear { model.feed.resize(width: geo.size.width, height: geo.size.height - 8) }
-            .onChange(of: geo.size) { _, size in model.feed.resize(width: size.width, height: size.height - 8) }
+            .onAppear { resize(geo.size) }
+            .onChange(of: geo.size) { _, size in resize(size) }
         }
         .clipped()
         .overlay {
@@ -27,6 +27,10 @@ struct DanmakuView: View {
                     .foregroundStyle(.tertiary)
             }
         }
+    }
+
+    private func resize(_ size: CGSize) {
+        model.feed.resize(width: Double(size.width), height: Double(size.height) - 8)
     }
 
     private func x(for item: DanmakuItem, width: Double, now: Date) -> Double {

@@ -20,6 +20,7 @@ jobs:
           brew install xcodegen
           ./scripts/bootstrap.sh
       - name: Build app
+        shell: bash  # runs with -eo pipefail so a failed xcodebuild fails the step
         run: |
           xcodebuild -project Kuro.xcodeproj -scheme Kuro -configuration Debug \
-            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build | xcbeautify || exit ${PIPESTATUS[0]}
+            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build | xcbeautify

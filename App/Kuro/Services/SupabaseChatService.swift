@@ -80,7 +80,7 @@ final class SupabaseChatService: ChatService {
             },
         ]
 
-        await channel.subscribe()
+        try await channel.subscribeWithError()
         self.channel = channel
 
         let keys = try await rpc("blocked_keys", ["p_room": room], as: [String].self)
