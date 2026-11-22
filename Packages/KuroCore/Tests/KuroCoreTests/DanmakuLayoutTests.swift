@@ -39,4 +39,24 @@ final class DanmakuLayoutTests: XCTestCase {
         layout.reset()
         XCTAssertNotNil(layout.place(width: 100, at: t0))
     }
+
+    func testChangingLaneCountAddsAndRemovesLanes() {
+        var layout = DanmakuLayout(laneCount: 1, panelWidth: 300, speed: 100, gap: 0)
+        XCTAssertEqual(layout.place(width: 100, at: t0)?.lane, 0)
+        layout.laneCount = 3                                        // the panel got taller
+        XCTAssertEqual(layout.place(width: 100, at: t0)?.lane, 1)
+        XCTAssertEqual(layout.place(width: 100, at: t0)?.lane, 2)
+        XCTAssertNil(layout.place(width: 100, at: t0))
+        layout.laneCount = 1                                        // and shorter again
+        XCTAssertNil(layout.place(width: 100, at: t0))              // lane 0 is still busy
+        XCTAssertEqual(layout.place(width: 100, at: t0.addingTimeInterval(1))?.lane, 0)
+    }
+
+    func testLaneCountNeverDropsBelowOne() {
+        var layout = DanmakuLayout(laneCount: 2, panelWidth: 300, speed: 100, gap: 0)
+        layout.laneCount = 0
+        XCTAssertEqual(layout.laneCount, 1)
+        XCTAssertEqual(layout.place(width: 100, at: t0)?.lane, 0)
+        XCTAssertEqual(DanmakuLayout(laneCount: -3).laneCount, 1)
+    }
 }

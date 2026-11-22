@@ -72,8 +72,14 @@ final class DanmakuFeed {
     }
 
     func resize(width: Double, height: Double) {
+        guard width.isFinite, height.isFinite else { return }
         layout.panelWidth = max(120, width)
-        layout.laneCount = max(1, Int((height - 8) / laneHeight))
+        layout.laneCount = lanes(forHeight: height)
+    }
+
+    private func lanes(forHeight height: Double) -> Int {
+        guard height.isFinite, height > 8 else { return 1 }
+        return max(1, Int((height - 8) / laneHeight))
     }
 
     // MARK: Content
@@ -146,7 +152,7 @@ final class DanmakuFeed {
         let now = Date()
         switch style {
         case .scroll:
-            let lanes = max(1, Int((height - 8) / laneHeight))
+            let lanes = self.lanes(forHeight: height)
             for (index, message) in messages.enumerated() {
                 let width = self.width(of: message)
                 let duration = (panelWidth + width) / layout.speed

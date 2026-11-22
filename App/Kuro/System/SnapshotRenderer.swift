@@ -103,6 +103,9 @@ enum SnapshotRenderer {
 
     private static func render<V: View>(_ view: V, model: AppModel, size: CGSize? = nil, name: String, into directory: URL,
                                         appearance: NSAppearance.Name) {
+        // Progress on stdout, so a crash in CI shows which screen it was drawing.
+        print("snapshot: \(name)")
+        fflush(stdout)
         let root = view.environment(model)
         let host = NSHostingView(rootView: root)
         let fitting = size ?? host.fittingSize

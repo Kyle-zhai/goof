@@ -25,7 +25,8 @@ extension NSColor {
     }
 
     var hexString: String {
-        let color = usingColorSpace(.sRGB) ?? .systemPink
+        // Catalog and pattern colors have no components; fall back to the brand coral.
+        let color = usingColorSpace(.sRGB) ?? NSColor(srgbRed: 1, green: 0.353, blue: 0.373, alpha: 1)
         let r = Int((color.redComponent * 255).rounded())
         let g = Int((color.greenComponent * 255).rounded())
         let b = Int((color.blueComponent * 255).rounded())

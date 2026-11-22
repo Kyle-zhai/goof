@@ -14,7 +14,14 @@ public struct DanmakuLayout: Sendable {
         public let duration: TimeInterval
     }
 
-    public var laneCount: Int { didSet { resizeLanes() } }
+    public var laneCount: Int {
+        didSet {
+            // Assigning inside the property's own observer writes storage
+            // directly. Doing it from a helper would call didSet again forever.
+            if laneCount < 1 { laneCount = 1 }
+            resizeLanes()
+        }
+    }
     public var panelWidth: Double
     /// Points per second.
     public var speed: Double
@@ -59,12 +66,13 @@ public struct DanmakuLayout: Sendable {
     /// The earliest time any lane becomes free.
     public var nextFreeTime: Date { laneFreeAt.min() ?? .distantPast }
 
+    /// Only reads `laneCount`: writing it here would re-enter `didSet`.
     private mutating func resizeLanes() {
-        laneCount = max(1, laneCount)
-        if laneFreeAt.count < laneCount {
-            laneFreeAt += Array(repeating: .distantPast, count: laneCount - laneFreeAt.count)
-        } else if laneFreeAt.count > laneCount {
-            laneFreeAt.removeLast(laneFreeAt.count - laneCount)
+        let count = laneCount
+        if laneFreeAt.count < count {
+            laneFreeAt += Array(repeating: .distantPast, count: count - laneFreeAt.count)
+        } else if laneFreeAt.count > count {
+            laneFreeAt.removeLast(laneFreeAt.count - count)
         }
     }
 }

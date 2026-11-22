@@ -34,17 +34,58 @@ jobs:
             -destination 'platform=macOS' -derivedDataPath build build | xcbeautify
 
       # Renders the real UI offscreen (see App/Kuro/System/SnapshotRenderer.swift).
+      # The copy is re-signed without entitlements first: screenshots don't need
+      # the sandbox, and without it the PNGs land in $TMPDIR instead of the app's
+      # container.
       - name: Render screenshots
         id: snapshots
         continue-on-error: true
         shell: bash
         run: |
-          perl -e 'alarm 120; exec @ARGV' build/Build/Products/Debug/Kuro.app/Contents/MacOS/Kuro --snapshot | tee snapshot.log
+          app=build/Build/Products/Debug/Kuro.app
+          codesign --force --deep --sign - "$app"
+          perl -e 'alarm 120; exec @ARGV' "$app/Contents/MacOS/Kuro" --snapshot | tee snapshot.log
           dir=$(sed -n 's/^KURO_SNAPSHOTS=//p' snapshot.log | tail -1)
           test -n "$dir"
           mkdir -p snapshots
           cp "$dir"/*.png snapshots/
           ls -la snapshots
+
+      - name: Show crash report
+        if: steps.snapshots.outcome == 'failure'
+        continue-on-error: true
+        shell: bash
+        run: |
+          report=""
+          for _ in $(seq 30); do
+            report=$(ls -t ~/Library/Logs/DiagnosticReports/Kuro*.ips 2>/dev/null | head -1)
+            [ -n "$report" ] && break
+            sleep 1
+          done
+          if [ -z "$report" ]; then echo "No crash report found"; exit 0; fi
+          python3 - "$report" <<'EOF' | xcrun swift-demangle --simplified
+          import json, sys
+          text = open(sys.argv[1]).read()
+          body = json.loads(text.partition("\n")[2])
+          print("exception:", json.dumps(body.get("exception")))
+          print("termination:", (body.get("termination") or {}).get("indicator"))
+          for key, lines in (body.get("asi") or {}).items():
+              print("message:", key, lines)
+          images = body.get("usedImages", [])
+          def show(title, frames):
+              print(title)
+              for i, frame in enumerate(frames[:60]):
+                  index = frame.get("imageIndex", -1)
+                  image = images[index].get("name", "?") if 0 <= index < len(images) else "?"
+                  symbol = frame.get("symbol") or hex(frame.get("imageOffset", 0))
+                  print(f"{i:3} {image:30} {symbol} + {frame.get('symbolLocation', 0)}")
+          if body.get("lastExceptionBacktrace"):
+              show("exception backtrace:", body["lastExceptionBacktrace"])
+          threads = body.get("threads", [])
+          faulting = body.get("faultingThread", 0)
+          if faulting < len(threads):
+              show(f"thread {faulting}:", threads[faulting].get("frames", []))
+          EOF
 
       - name: Upload screenshots
         if: steps.snapshots.outcome == 'success'
