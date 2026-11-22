@@ -33,27 +33,15 @@ jobs:
           xcodebuild -project Kuro.xcodeproj -scheme Kuro -configuration Debug \
             -destination 'platform=macOS' -derivedDataPath build build | xcbeautify
 
-      # Renders the real UI offscreen (see App/Kuro/System/SnapshotRenderer.swift).
-      # The copy is re-signed without entitlements first: screenshots don't need
-      # the sandbox, and without it the PNGs land in $TMPDIR instead of the app's
-      # container. Launching through `open` makes Kuro the frontmost app, so
-      # controls draw in their active colors; scroll bars are the overlay kind,
-      # as on a Mac with a trackpad.
+      # Renders the real UI offscreen (see App/Kuro/System/SnapshotRenderer.swift),
+      # with overlay scroll bars as on a Mac with a trackpad.
       - name: Render screenshots
         id: snapshots
         continue-on-error: true
         shell: bash
         run: |
-          app="$PWD/build/Build/Products/Debug/Kuro.app"
-          codesign --force --deep --sign - "$app"
-          args=(--snapshot -AppleShowScrollBars WhenScrolling)
-          perl -e 'alarm 120; exec @ARGV' open -W -n --stdout "$PWD/snapshot.log" --stderr "$PWD/snapshot.err" "$app" --args "${args[@]}" || true
-          if ! grep -q '^KURO_SNAPSHOTS=' snapshot.log 2>/dev/null; then
-            echo "open did not produce screenshots; running the binary directly"
-            tail -20 snapshot.err 2>/dev/null || true
-            perl -e 'alarm 120; exec @ARGV' "$app/Contents/MacOS/Kuro" "${args[@]}" > snapshot.log
-          fi
-          cat snapshot.log
+          perl -e 'alarm 120; exec @ARGV' build/Build/Products/Debug/Kuro.app/Contents/MacOS/Kuro \
+            --snapshot -AppleShowScrollBars WhenScrolling | tee snapshot.log
           dir=$(sed -n 's/^KURO_SNAPSHOTS=//p' snapshot.log | tail -1)
           test -n "$dir"
           mkdir -p snapshots

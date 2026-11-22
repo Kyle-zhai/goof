@@ -23,7 +23,7 @@ final class MyChatService: ChatService {
 }
 ```
 
-然后在 `ChatServiceFactory.make()` 里返回它。网络权限（`com.apple.security.network.client`）已经在 `project.yml` 的 entitlements 里打开了。`kind` 不是 `.demo` 之后，界面上的「演示」标记会自动消失。
+然后在 `ChatServiceFactory.make()` 里返回它。`kind` 不是 `.demo` 之后，界面上的「演示」标记会自动消失。Kuro 默认没有开启 App Sandbox，可以直接联网；如果你给它打开了沙盒，记得在 `project.yml` 的 entitlements 里加上 `com.apple.security.network.client`。
 
 ## 2. 调用约定
 
@@ -74,4 +74,4 @@ final class MyChatService: ChatService {
 
 协议里没有登录方法，因为不同后端的登录方式差别很大。可以在你的 `ChatService` 里处理，例如第一次 `join` 前先匿名登录，或者在 Dashboard 里加一个登录页。
 
-使用 Sign in with Apple 需要付费的 Apple 开发者账号，还要在 `project.yml` 的 entitlements 里加上 `com.apple.developer.applesignin`，并把签名改成你自己的 team。
+使用 Sign in with Apple 需要付费的 Apple 开发者账号：在 `project.yml` 里给 Kuro 加上 entitlements（`com.apple.developer.applesignin`），并把签名改成你自己的 team。

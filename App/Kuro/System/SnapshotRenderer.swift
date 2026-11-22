@@ -10,13 +10,6 @@ enum SnapshotRenderer {
     static var isRequested: Bool { CommandLine.arguments.contains("--snapshot") }
 
     static func run() {
-        // Controls only draw in their active colors (switches, default buttons)
-        // in the key window of the frontmost app. CI launches Kuro with `open`,
-        // which makes it frontmost; each snapshot window then becomes key.
-        NSApp.activate()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
-        print("snapshot: app is \(NSApp.isActive ? "active" : "not active")")
-
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("KuroSnapshots", isDirectory: true)
         try? FileManager.default.removeItem(at: directory)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -113,18 +106,17 @@ enum SnapshotRenderer {
         // Progress on stdout, so a crash in CI shows which screen it was drawing.
         print("snapshot: \(name)")
         fflush(stdout)
-        let root = view.environment(model)
+        let root = view.environment(model).environment(\.isSnapshotRendering, true)
         let host = NSHostingView(rootView: root)
         let fitting = size ?? host.fittingSize
         host.frame = NSRect(origin: .zero, size: fitting)
         host.appearance = NSAppearance(named: appearance)
 
-        let window = SnapshotWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.appearance = NSAppearance(named: appearance)
         window.contentView = host
         window.setFrameOrigin(NSPoint(x: -20_000, y: -20_000))
-        window.makeKeyAndOrderFront(nil)
 
         // Let SwiftUI lay out, load images and run onAppear.
         host.layoutSubtreeIfNeeded()
@@ -142,15 +134,20 @@ enum SnapshotRenderer {
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: directory.appendingPathComponent("\(name).png"))
         }
-        window.orderOut(nil)
         window.close()
     }
 }
 
-/// An offscreen borderless window that can still become key.
-private final class SnapshotWindow: NSWindow {
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
+private struct SnapshotRenderingKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// True while `Kuro --snapshot` draws a view offscreen.
+    var isSnapshotRendering: Bool {
+        get { self[SnapshotRenderingKey.self] }
+        set { self[SnapshotRenderingKey.self] = newValue }
+    }
 }
 
 /// A piece of desktop wallpaper behind the panel, so the translucent panel

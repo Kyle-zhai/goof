@@ -126,6 +126,12 @@ private struct StyleCard: View {
                     }
                 }
             }
+            // The same soft edges as the real panel.
+            .mask {
+                LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.05),
+                                       .init(color: .black, location: 0.95), .init(color: .clear, location: 1)],
+                               startPoint: .leading, endPoint: .trailing)
+            }
         case .stack:
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(Self.stackSamples) { message in

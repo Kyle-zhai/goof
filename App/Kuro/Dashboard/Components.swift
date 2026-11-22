@@ -107,13 +107,42 @@ struct RowDivider: View {
 struct SwitchToggle: View {
     let label: String
     @Binding var isOn: Bool
+    @Environment(\.isSnapshotRendering) private var isSnapshotRendering
 
     var body: some View {
-        Toggle(label, isOn: $isOn)
-            .toggleStyle(.switch)
-            .labelsHidden()
-            .controlSize(.small)
-            .accessibilityLabel(label)
+        if isSnapshotRendering {
+            SnapshotSwitch(isOn: isOn)
+                .accessibilityLabel(label)
+        } else {
+            Toggle(label, isOn: $isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .controlSize(.small)
+                .accessibilityLabel(label)
+        }
+    }
+}
+
+/// Screenshots only: the look of a small system switch in the window you are
+/// using. Offscreen windows never become key, so the real switch would draw in
+/// its inactive gray.
+private struct SnapshotSwitch: View {
+    let isOn: Bool
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        let offTrack = colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.1)
+        Capsule()
+            .fill(isOn ? KuroColors.accent : offTrack)
+            .frame(width: 32, height: 18)
+            .overlay(alignment: isOn ? .trailing : .leading) {
+                Circle()
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.28), radius: 0.8, y: 0.5)
+                    .padding(1.5)
+            }
+            .opacity(isEnabled ? 1 : 0.5)
     }
 }
 

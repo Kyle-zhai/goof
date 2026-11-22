@@ -91,14 +91,14 @@ Kuro 自己和系统界面（Dock、Spotlight、通知中心、登录窗口等�
 | 开启了哪些应用、弹幕外观、空闲阈值、暂停到什么时候 | 本机 `UserDefaults` | 不会 |
 | 当前前台的白名单应用（用来在菜单里提示「在 Figma 里开启弹幕」） | 只在内存里 | 不会 |
 | 个人资料（昵称、用户名、简介、主题色） | 本机 `UserDefaults` | 会，作为公开资料 |
-| 头像 | 应用沙盒里的 `Application Support/Kuro/avatar.png`，256×256 | 会，作为公开资料 |
+| 头像 | `~/Library/Application Support/Kuro/avatar.png`，256×256 | 会，作为公开资料 |
 | 当前房间 id、在线和离开状态 | 不保存 | 会，这是房间本身 |
 | 发出的弹幕 | 不保存 | 会 |
 
 - 不在白名单里的应用，Kuro 不记录、也不上报，连「你在用一个不在白名单里的应用」都不会说。
 - 别人看不到你在用哪些应用，只能看到同一个房间里的人。服务器需要遵守的规则见 [BACKEND.md](BACKEND.md#3-服务器必须保证的事)。
 - 「屏幕共享和录屏时隐藏面板」使用 `NSWindow.sharingType = .none`。个别不遵守这个设置的录屏工具仍可能录到面板。
-- 应用开启了 App Sandbox，只申请了网络访问和「读取用户选择的文件」（选头像）。
+- Kuro 不需要任何权限或 entitlements，默认也没有开启 App Sandbox：没有付费开发者签名时，每次编译出来的签名都不一样，沙盒应用每次更新都会被系统当成「另一个应用」，弹窗询问能不能访问它自己的数据。如果你用自己的 Developer ID 签名发布，可以在 `project.yml` 里加上 `com.apple.security.app-sandbox`、`com.apple.security.network.client`（连接服务器）和 `com.apple.security.files.user-selected.read-only`（选头像）。
 
 ## 7. 和服务器的接口
 

@@ -31,14 +31,10 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.social-networking
         NSHumanReadableCopyright: "© 2026 Kuro contributors. MIT License."
-    entitlements:
-      path: App/Kuro/Resources/Kuro.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
-        # For a real backend (docs/BACKEND.md). The demo backend never uses the network.
-        com.apple.security.network.client: true
-        # Picking an avatar image.
-        com.apple.security.files.user-selected.read-only: true
+    # No App Sandbox: with ad-hoc signing every build has a new signature, and
+    # macOS then treats each update of a sandboxed app as a different app asking
+    # for its data. Kuro needs no entitlements. If you sign with your own
+    # Developer ID, you can turn the sandbox on (see docs/ARCHITECTURE.md).
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.kuro.Kuro
