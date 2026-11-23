@@ -104,24 +104,3 @@ jobs:
             base64 -i "/tmp/$name.jpg" | fold -w 2000
             echo "=== END $name ==="
           done
-
-  # Temporary: prints the full-resolution README screenshots, one per job log.
-  readme-shots:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        image: [panel-scroll, panel-stack, panel-capsule, dashboard-apps, dashboard-apps-dark,
-                dashboard-appearance, dashboard-appearance-dark, dashboard-profile, dashboard-profile-dark]
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: screenshots
-          path: snapshots
-      - name: Print ${{ matrix.image }}
-        run: |
-          f="snapshots/${{ matrix.image }}.png"
-          ls -la "$f"
-          echo "=== BEGIN png-${{ matrix.image }} ==="
-          base64 -w 4000 "$f"
-          echo "=== END png-${{ matrix.image }} ==="
