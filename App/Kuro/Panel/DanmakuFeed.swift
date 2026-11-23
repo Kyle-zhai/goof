@@ -105,6 +105,28 @@ final class DanmakuFeed {
         }
     }
 
+    /// Marks a message the user wrote that arrived from the server before
+    /// `send` returned (a broadcast echo), wherever it is in the feed.
+    func markMine(messageID: UUID) {
+        func mark(_ message: inout ChatMessage) {
+            if message.id == messageID { message.isMine = true }
+        }
+        for index in rows.indices { mark(&rows[index]) }
+        for index in queue.indices { mark(&queue[index]) }
+        pacer.modify(mark)
+        for index in items.indices where items[index].id == messageID {
+            var message = items[index].message
+            message.isMine = true
+            let item = items[index]
+            items[index] = DanmakuItem(id: item.id, message: message, lane: item.lane, start: item.start,
+                                       duration: item.duration, width: item.width)
+        }
+    }
+
+    func contains(messageID: UUID) -> Bool {
+        contains(messageID)
+    }
+
     func remove(messageID: UUID) {
         removeAll { $0.id == messageID }
     }

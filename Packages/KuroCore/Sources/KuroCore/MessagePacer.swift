@@ -39,6 +39,11 @@ public struct MessagePacer<Element: Sendable>: Sendable {
         pending.removeAll(where: shouldRemove)
     }
 
+    /// Changes waiting items in place, keeping their order.
+    public mutating func modify(_ transform: (inout Element) -> Void) {
+        for index in pending.indices { transform(&pending[index]) }
+    }
+
     public mutating func clear() {
         pending.removeAll()
     }

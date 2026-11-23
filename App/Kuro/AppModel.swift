@@ -65,6 +65,9 @@ final class AppModel {
     @ObservationIgnored private var pauseTimer: Timer?
     @ObservationIgnored private var wakeObserver: NSObjectProtocol?
     @ObservationIgnored private var blockedKeys: Set<String> = []
+    /// Author keys of the user's own messages in the joined room, learned from `send`.
+    @ObservationIgnored private var myAuthorKeys: Set<String> = []
+    @ObservationIgnored private var joinRetry: Task<Void, Never>?
     @ObservationIgnored private var started = false
 
     init(chat: ChatService? = nil, settings: SettingsStore? = nil, profile: ProfileStore? = nil,
@@ -302,9 +305,16 @@ final class AppModel {
         let anonymous = postsAnonymously
         Task {
             do {
-                let sent = try await chat.send(text, anonymous: anonymous)
+                var sent = try await chat.send(text, anonymous: anonymous)
                 guard sent.room == joinedRoom else { return }
-                feed.push(sent)
+                sent.isMine = true
+                myAuthorKeys.insert(sent.authorKey)
+                if feed.contains(messageID: sent.id) {
+                    // The server's broadcast of this message got here first.
+                    feed.markMine(messageID: sent.id)
+                } else {
+                    feed.push(sent)
+                }
             } catch {
                 if draft.isEmpty { draft = text }
                 show(error)
@@ -438,6 +448,8 @@ final class AppModel {
         if dashboard == nil { dashboard = DashboardWindowController(model: self) }
         AppIconCache.refresh()
         refreshLaunchAtLogin()
+        // The list may have been unavailable at launch (offline, not signed in yet).
+        Task { await refreshBlocked() }
         dashboard?.show()
     }
 
@@ -483,33 +495,67 @@ final class AppModel {
         frontmostCatalogID = monitor?.frontmostCatalogID
     }
 
-    private func join(_ room: String) {
-        joinedRoom = room
-        members = []
-        unreadCount = 0
-        feed.clear()
+    /// - Parameter attempt: 0 for a new room, then counts retries after errors.
+    private func join(_ room: String, attempt: Int = 0) {
+        joinRetry?.cancel()
+        joinRetry = nil
+        if attempt == 0 {
+            joinedRoom = room
+            members = []
+            unreadCount = 0
+            myAuthorKeys = []
+            feed.clear()
+        }
         isJoining = true
-        let anonymous = postsAnonymously
         let replay = settings.replayHistory
         enqueue { [weak self] in
             guard let self, self.joinedRoom == room else { return }
             do {
-                let history = try await self.chat.join(room: room, anonymous: anonymous)
+                let history = try await self.chat.join(room: room, anonymous: self.postsAnonymously)
                 guard self.joinedRoom == room else { return }
                 self.isJoining = false
                 if replay {
-                    self.feed.replay(history.filter { !self.blockedKeys.contains($0.authorKey) })
+                    let visible = history.filter { !self.blockedKeys.contains($0.authorKey) }
+                    self.feed.replay(visible.map { self.markingMine($0) })
                 }
                 if self.isAway { await self.chat.setAway(true) }
             } catch {
                 guard self.joinedRoom == room else { return }
-                self.isJoining = false
-                self.show(error)
+                if attempt == 0 { self.show(error) }
+                guard Self.shouldRetryJoin(after: error) else {
+                    self.isJoining = false
+                    return
+                }
+                // Offline, server restarting, Wi-Fi not back after sleep: keep
+                // trying while the user is still in this app, backing off to 30 s.
+                let delay = min(30, 2 << min(attempt, 4))
+                self.joinRetry = Task { [weak self] in
+                    try? await Task.sleep(for: .seconds(delay))
+                    guard !Task.isCancelled, let self, self.joinedRoom == room else { return }
+                    self.join(room, attempt: attempt + 1)
+                }
             }
         }
     }
 
+    /// Errors that describe the user's situation (banned, needs a nickname...)
+    /// will not go away by retrying; anything else may be the network.
+    private static func shouldRetryJoin(after error: Error) -> Bool {
+        guard let chatError = error as? ChatError else { return true }
+        if case .server = chatError { return true }
+        return false
+    }
+
+    private func markingMine(_ message: ChatMessage) -> ChatMessage {
+        guard !message.isMine, myAuthorKeys.contains(message.authorKey) else { return message }
+        var message = message
+        message.isMine = true
+        return message
+    }
+
     private func leaveRoom() {
+        joinRetry?.cancel()
+        joinRetry = nil
         joinedRoom = nil
         members = []
         isJoining = false
@@ -520,8 +566,9 @@ final class AppModel {
 
     private func handle(_ event: ChatEvent) {
         switch event {
-        case .message(let message):
-            guard message.room == joinedRoom, !blockedKeys.contains(message.authorKey) else { return }
+        case .message(let incoming):
+            guard incoming.room == joinedRoom, !blockedKeys.contains(incoming.authorKey) else { return }
+            let message = markingMine(incoming)
             feed.push(message)
             if panelCollapsed, !message.isMine { unreadCount += 1 }
         case .hide(let id):

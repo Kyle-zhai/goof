@@ -66,7 +66,7 @@ struct PrivacyPane: View {
                             subtitle: "只有你开启的应用会产生房间。别人只能看到同一个房间里的人和消息，永远看不到你在用哪些应用；不在白名单里的应用什么都不上传。")
                 RowDivider()
                 SettingsRow(title: "保存在本机的内容",
-                            subtitle: "设置、个人资料和头像保存在这台 Mac 上。删除 Kuro 后可以在「~/Library/Containers/app.kuro.Kuro」里彻底清除。")
+                            subtitle: "设置、个人资料和头像保存在这台 Mac 上。删除 Kuro 后，再删掉「~/Library/Application Support/Kuro」和「~/Library/Preferences/app.kuro.Kuro.plist」就能彻底清除。")
             }
         }
     }

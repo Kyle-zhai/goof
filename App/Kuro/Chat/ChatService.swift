@@ -1,4 +1,5 @@
 import Foundation
+import KuroCore
 
 // MARK: - Backend contract
 //
@@ -69,7 +70,11 @@ struct ChatMessage: Identifiable, Equatable, Codable, Sendable {
     let createdAt: Date
     /// History shown on join, rendered in a quieter style. Not sent by servers.
     var isReplay = false
-    /// Written by this user. Not sent by servers.
+    /// Written by this user. Not sent by servers: the service sets it on its
+    /// own messages (the result of `send`, echoes of it and replayed history),
+    /// for example by comparing `authorKey` with the user's own key for the
+    /// room. As a fallback, `AppModel` also treats messages carrying an
+    /// `authorKey` it has seen on its own sent messages as mine.
     var isMine = false
 
     enum CodingKeys: String, CodingKey {
@@ -107,6 +112,11 @@ struct BlockedUser: Identifiable, Equatable, Codable, Sendable {
     /// What the user saw when they blocked, e.g. "匿名 · 橘猫·3f2".
     let label: String
     let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, label
+        case createdAt = "created_at"
+    }
 }
 
 enum ReportReason: String, CaseIterable, Identifiable, Sendable {
@@ -131,6 +141,34 @@ enum ChatEvent: Sendable {
     /// A message was removed by moderation.
     case hide(UUID)
     case members([RoomMember])
+}
+
+/// JSON coding for the models above, matching what a typical server sends:
+/// snake_case keys (see each model's `CodingKeys`) and ISO 8601 dates, with or
+/// without fractional seconds. Use it when decoding server responses, e.g.
+/// `try ChatWire.decoder().decode([ChatMessage].self, from: data)`.
+enum ChatWire {
+    static func decoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            if let seconds = try? container.decode(Double.self) {
+                return Date(timeIntervalSince1970: seconds)
+            }
+            let string = try container.decode(String.self)
+            guard let date = WireDate.parse(string) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Not an ISO 8601 date: \(string)")
+            }
+            return date
+        }
+        return decoder
+    }
+
+    static func encoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }
 }
 
 enum ChatError: LocalizedError, Equatable {

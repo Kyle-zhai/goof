@@ -43,6 +43,14 @@ final class MyChatService: ChatService {
 - 所有调用都在主线程（MainActor）上。`onEvent` 也请在主线程上调用。
 - `updateProfile`、`join`、`leave`、`setAway`、`setAnonymous` 会按顺序一个接一个调用，不会交错，所以「快速离开再进入」不会乱序。
 - 发送前已经做过一遍长度、空白和频率检查（见 [`MessageRules`](../Packages/KuroCore/Sources/KuroCore/MessageRules.swift)），但客户端是可以被改的，服务器必须自己再检查一遍。
+- `join` 抛错时（断网、服务器重启、睡眠唤醒后 Wi-Fi 还没连上），只要用户还在这个应用里，客户端会以 2、4、8、16、30 秒的间隔一直重试，提示只显示一次。`ChatError` 里除 `server` 以外的错误被当作「重试也没用」，不会重试。
+- `blockedUsers` 在启动时和每次打开 Dashboard 时调用。
+
+你的实现需要负责：
+
+- **连接**。实时连接断开后自己重连，并重新加入当前房间、重新上报在线状态；客户端不会感知到断线。如果在 `join` 时连不上，直接抛错，客户端会重试。
+- **`isMine`**。服务器广播的消息不带 `isMine`。请在 `send` 的返回值、广播回来的自己的消息、以及 `join` 的回放里，把自己发的消息标成 `isMine = true`。最简单的做法是让服务器在 `join` 时告诉客户端「你在这个房间今天的 `authorKey`」，然后逐条比较。客户端也有兜底：`send` 返回后会记住它的 `authorKey`，之后带同一个 key 的消息都算自己的；如果广播比 `send` 的返回更早到达，客户端会把已经显示的那条改成自己的样式。
+- **解析 JSON**。模型的 `CodingKeys` 是 snake_case（`display_name`、`author_key`、`created_at`…）。解码时用 `ChatWire.decoder()`，它能解析带时区的 ISO 8601 时间，包括 Postgres 那种带微秒的格式；默认的 `JSONDecoder` 解析不了这类日期。
 
 事件（`ChatEvent`）：
 
@@ -70,7 +78,17 @@ final class MyChatService: ChatService {
 - **Firebase**：Auth + Firestore 或 Realtime Database + Cloud Functions 做校验和限流。
 - **自建**：WebSocket 服务 + Redis（在线列表和限流）+ 任意数据库。
 
-## 5. 登录
+## 5. 密钥和配置
+
+客户端是开源的，打包出去的 App 也能被任何人拆开，所以**客户端里只能放公开的值**：服务器地址，以及本来就设计成公开的 key（比如 Supabase 的 anon key，它的安全依赖 RLS）。管理员密钥、Supabase 的 `service_role` key、数据库密码、HMAC 的盐，都只能放在服务器上。
+
+如果你的 fork 是公开的，连公开的值也最好别提交：把它们写进 `Config.xcconfig`（已在 `.gitignore` 里），在 `project.yml` 里通过 `configFiles` 引入，再用 Info.plist 的 `$(变量名)` 读出来。
+
+## 6. 头像
+
+`updateProfile` 会把 256×256 的头像 PNG 交给你，`ChatMessage.avatarURL` 也留好了字段，但现在的面板只显示自己的头像：弹幕里显示的是名字和名字颜色，在线列表只用来算人数。所以头像上传是可选的；以后弹幕支持显示头像时会用到 `avatarURL`。
+
+## 7. 登录
 
 协议里没有登录方法，因为不同后端的登录方式差别很大。可以在你的 `ChatService` 里处理，例如第一次 `join` 前先匿名登录，或者在 Dashboard 里加一个登录页。
 
