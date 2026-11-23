@@ -117,7 +117,7 @@ Goof 只知道两件事：现在最前面的是哪个 App，以及你多久没�
 
 ```sh
 brew install xcodegen
-git clone https://github.com/Kyle-zhai/kuro.git && cd kuro
+git clone https://github.com/Kyle-zhai/goof.git && cd goof
 ./scripts/bootstrap.sh && open Goof.xcodeproj   # 选 Goof，按 ⌘R
 ```
 

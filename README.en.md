@@ -120,7 +120,7 @@ You can also build it yourself with Xcode 15.3 or later. No Apple Developer acco
 
 ```sh
 brew install xcodegen
-git clone https://github.com/Kyle-zhai/kuro.git && cd kuro
+git clone https://github.com/Kyle-zhai/goof.git && cd goof
 ./scripts/bootstrap.sh && open Goof.xcodeproj   # pick Goof, press ⌘R
 ```
 

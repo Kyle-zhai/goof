@@ -6,6 +6,6 @@
    - macOS 14：在 Finder 里右键 Goof.app，选「打开」。
 3. Goof 出现在菜单栏右上角，第一次会带你走一遍设置。
 
-没有连接服务器时，Goof 以演示模式运行：房间里的人和消息是在本机模拟的。接入自己的服务器见 [docs/BACKEND.md](https://github.com/Kyle-zhai/kuro/blob/main/docs/BACKEND.md)。
+没有连接服务器时，Goof 以演示模式运行：房间里的人和消息是在本机模拟的。接入自己的服务器见 [docs/BACKEND.md](https://github.com/Kyle-zhai/goof/blob/main/docs/BACKEND.md)。
 
 ---

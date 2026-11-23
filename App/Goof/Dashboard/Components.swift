@@ -23,9 +23,9 @@ enum Palette {
 
 enum GoofLinks {
     /// Change these in a fork.
-    static let repository = URL(string: "https://github.com/Kyle-zhai/kuro")!
-    static let backendGuide = URL(string: "https://github.com/Kyle-zhai/kuro/blob/main/docs/BACKEND.md")!
-    static let addAnApp = URL(string: "https://github.com/Kyle-zhai/kuro/blob/main/CONTRIBUTING.md#adding-an-app")!
+    static let repository = URL(string: "https://github.com/Kyle-zhai/goof")!
+    static let backendGuide = URL(string: "https://github.com/Kyle-zhai/goof/blob/main/docs/BACKEND.md")!
+    static let addAnApp = URL(string: "https://github.com/Kyle-zhai/goof/blob/main/CONTRIBUTING.md#adding-an-app")!
 }
 
 struct Card<Content: View>: View {
