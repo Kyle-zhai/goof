@@ -1,58 +1,58 @@
-name: Kuro
+name: Goof
 options:
-  bundleIdPrefix: app.kuro
+  bundleIdPrefix: app.goof
   deploymentTarget:
     macOS: "14.0"
   developmentLanguage: zh-Hans
   createIntermediateGroups: true
 packages:
-  KuroCore:
-    path: Packages/KuroCore
+  GoofCore:
+    path: Packages/GoofCore
 settings:
   base:
     SWIFT_VERSION: "5.10"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 targets:
-  Kuro:
+  Goof:
     type: application
     platform: macOS
     sources:
-      - path: App/Kuro
+      - path: App/Goof
     dependencies:
-      - package: KuroCore
+      - package: GoofCore
     info:
-      path: App/Kuro/Resources/Info.plist
+      path: App/Goof/Resources/Info.plist
       properties:
-        CFBundleDisplayName: Kuro
+        CFBundleDisplayName: Goof
         CFBundleDevelopmentRegion: zh-Hans
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.social-networking
-        NSHumanReadableCopyright: "© 2026 Kuro contributors. MIT License."
+        NSHumanReadableCopyright: "© 2026 Goof contributors. MIT License."
     # No App Sandbox: with ad-hoc signing every build has a new signature, and
     # macOS then treats each update of a sandboxed app as a different app asking
-    # for its data. Kuro needs no entitlements. If you sign with your own
+    # for its data. Goof needs no entitlements. If you sign with your own
     # Developer ID, you can turn the sandbox on (see docs/ARCHITECTURE.md).
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.kuro.Kuro
-        PRODUCT_NAME: Kuro
+        PRODUCT_BUNDLE_IDENTIFIER: app.goof.Goof
+        PRODUCT_NAME: Goof
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_HARDENED_RUNTIME: true
         DEAD_CODE_STRIPPING: true
-        # Ad-hoc signing, so anyone can build and run Kuro without an Apple
+        # Ad-hoc signing, so anyone can build and run Goof without an Apple
         # Developer account. To ship notarized builds, set your own team here.
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""
 schemes:
-  Kuro:
+  Goof:
     build:
       targets:
-        Kuro: all
+        Goof: all
     run:
       config: Debug
     archive:

@@ -19,8 +19,8 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.4.app || true
 
-      - name: KuroCore tests
-        run: swift test --package-path Packages/KuroCore
+      - name: GoofCore tests
+        run: swift test --package-path Packages/GoofCore
 
       - name: Generate project
         run: |
@@ -30,19 +30,19 @@ jobs:
       - name: Build app
         shell: bash  # -eo pipefail, so a failed xcodebuild fails the step
         run: |
-          xcodebuild -project Kuro.xcodeproj -scheme Kuro -configuration Debug \
+          xcodebuild -project Goof.xcodeproj -scheme Goof -configuration Debug \
             -destination 'platform=macOS' -derivedDataPath build build | xcbeautify
 
-      # Renders the real UI offscreen (see App/Kuro/System/SnapshotRenderer.swift),
+      # Renders the real UI offscreen (see App/Goof/System/SnapshotRenderer.swift),
       # with overlay scroll bars as on a Mac with a trackpad.
       - name: Render screenshots
         id: snapshots
         continue-on-error: true
         shell: bash
         run: |
-          perl -e 'alarm 120; exec @ARGV' build/Build/Products/Debug/Kuro.app/Contents/MacOS/Kuro \
+          perl -e 'alarm 120; exec @ARGV' build/Build/Products/Debug/Goof.app/Contents/MacOS/Goof \
             --snapshot -AppleShowScrollBars WhenScrolling | tee snapshot.log
-          dir=$(sed -n 's/^KURO_SNAPSHOTS=//p' snapshot.log | tail -1)
+          dir=$(sed -n 's/^GOOF_SNAPSHOTS=//p' snapshot.log | tail -1)
           test -n "$dir"
           mkdir -p snapshots
           cp "$dir"/*.png snapshots/
@@ -55,7 +55,7 @@ jobs:
         run: |
           report=""
           for _ in $(seq 30); do
-            report=$(ls -t ~/Library/Logs/DiagnosticReports/Kuro*.ips 2>/dev/null | head -1)
+            report=$(ls -t ~/Library/Logs/DiagnosticReports/Goof*.ips 2>/dev/null | head -1)
             [ -n "$report" ] && break
             sleep 1
           done
@@ -104,3 +104,24 @@ jobs:
             base64 -i "/tmp/$name.jpg" | fold -w 2000
             echo "=== END $name ==="
           done
+
+  # Temporary: prints the full-resolution README screenshots, one per job log.
+  readme-shots:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [panel-scroll, panel-stack, panel-capsule, dashboard-apps, dashboard-apps-dark,
+                dashboard-appearance, dashboard-appearance-dark, dashboard-profile, dashboard-profile-dark]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: snapshots
+      - name: Print ${{ matrix.image }}
+        run: |
+          f="snapshots/${{ matrix.image }}.png"
+          ls -la "$f"
+          echo "=== BEGIN png-${{ matrix.image }} ==="
+          base64 -w 4000 "$f"
+          echo "=== END png-${{ matrix.image }} ==="

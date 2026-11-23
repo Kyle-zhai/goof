@@ -1,6 +1,6 @@
 # 接入服务器
 
-Kuro 的仓库只包含客户端。所有和服务器打交道的地方都经过一个协议：[`ChatService`](../App/Kuro/Chat/ChatService.swift)。默认的 [`DemoChatService`](../App/Kuro/Chat/DemoChatService.swift) 在本机模拟房间；换成你自己的实现，Kuro 就成了真正的多人应用。
+Goof 的仓库只包含客户端。所有和服务器打交道的地方都经过一个协议：[`ChatService`](../App/Goof/Chat/ChatService.swift)。默认的 [`DemoChatService`](../App/Goof/Chat/DemoChatService.swift) 在本机模拟房间；换成你自己的实现，Goof 就成了真正的多人应用。
 
 ## 1. 实现协议
 
@@ -23,17 +23,17 @@ final class MyChatService: ChatService {
 }
 ```
 
-然后在 `ChatServiceFactory.make()` 里返回它。`kind` 不是 `.demo` 之后，界面上的「演示」标记会自动消失。Kuro 默认没有开启 App Sandbox，可以直接联网；如果你给它打开了沙盒，记得在 `project.yml` 的 entitlements 里加上 `com.apple.security.network.client`。
+然后在 `ChatServiceFactory.make()` 里返回它。`kind` 不是 `.demo` 之后，界面上的「演示」标记会自动消失。Goof 默认没有开启 App Sandbox，可以直接联网；如果你给它打开了沙盒，记得在 `project.yml` 的 entitlements 里加上 `com.apple.security.network.client`。
 
 ## 2. 调用约定
 
 | 方法 | 什么时候调用 | 要做什么 |
 | --- | --- | --- |
 | `updateProfile` | 启动时一次，之后资料每次变化 | 保存公开资料。`avatarPNG` 是 256×256 的 PNG，或者为 nil（用首字母头像） |
-| `join(room:anonymous:)` | 进入房间。`room` 是 [`AppCatalog`](../Packages/KuroCore/Sources/KuroCore/AppCatalog.swift) 里的 id，比如 `figma` | 隐式离开上一个房间；加入这个房间的实时频道和在线列表；返回最近的回放消息，从旧到新 |
+| `join(room:anonymous:)` | 进入房间。`room` 是 [`AppCatalog`](../Packages/GoofCore/Sources/GoofCore/AppCatalog.swift) 里的 id，比如 `figma` | 隐式离开上一个房间；加入这个房间的实时频道和在线列表；返回最近的回放消息，从旧到新 |
 | `setAway` | 用户切到别的应用（还在 45 秒宽限期内），或者回来了 | 更新在线状态。离开中的人不计入在线人数 |
 | `setAnonymous` | 用户切换匿名或实名 | 更新自己在在线列表里的显示 |
-| `leave` | 宽限期结束、锁屏、睡眠、暂停 Kuro，或者用户关掉了这个应用的开关 | 离开频道和在线列表 |
+| `leave` | 宽限期结束、锁屏、睡眠、暂停 Goof，或者用户关掉了这个应用的开关 | 离开频道和在线列表 |
 | `send` | 用户发送弹幕 | 校验、保存、广播，返回别人看到的那条消息（带匿名昵称和 `authorKey`） |
 | `report` | 右键举报 | 记录举报 |
 | `block` / `blockedUsers` / `unblock` | 右键屏蔽，以及 Dashboard 的屏蔽列表 | 见下文 |
@@ -42,7 +42,7 @@ final class MyChatService: ChatService {
 
 - 所有调用都在主线程（MainActor）上。`onEvent` 也请在主线程上调用。
 - `updateProfile`、`join`、`leave`、`setAway`、`setAnonymous` 会按顺序一个接一个调用，不会交错，所以「快速离开再进入」不会乱序。
-- 发送前已经做过一遍长度、空白和频率检查（见 [`MessageRules`](../Packages/KuroCore/Sources/KuroCore/MessageRules.swift)），但客户端是可以被改的，服务器必须自己再检查一遍。
+- 发送前已经做过一遍长度、空白和频率检查（见 [`MessageRules`](../Packages/GoofCore/Sources/GoofCore/MessageRules.swift)），但客户端是可以被改的，服务器必须自己再检查一遍。
 - `join` 抛错时（断网、服务器重启、睡眠唤醒后 Wi-Fi 还没连上），只要用户还在这个应用里，客户端会以 2、4、8、16、30 秒的间隔一直重试，提示只显示一次。`ChatError` 里除 `server` 以外的错误被当作「重试也没用」，不会重试。
 - `blockedUsers` 在启动时和每次打开 Dashboard 时调用。
 
@@ -58,7 +58,7 @@ final class MyChatService: ChatService {
 - `.hide(UUID)`：消息被审核移除，客户端会立刻把它从面板上拿掉。
 - `.members([RoomMember])`：在线列表变化，每次给全量。
 
-出错时抛出 [`ChatError`](../App/Kuro/Chat/ChatService.swift) 里对应的错误，界面会显示合适的提示：`rateLimited`、`duplicate`、`tooLong`、`notInRoom`、`needsNickname`、`banned`，其他情况用 `server(String)`。
+出错时抛出 [`ChatError`](../App/Goof/Chat/ChatService.swift) 里对应的错误，界面会显示合适的提示：`rateLimited`、`duplicate`、`tooLong`、`notInRoom`、`needsNickname`、`banned`，其他情况用 `server(String)`。
 
 ## 3. 服务器必须保证的事
 
@@ -92,4 +92,4 @@ final class MyChatService: ChatService {
 
 协议里没有登录方法，因为不同后端的登录方式差别很大。可以在你的 `ChatService` 里处理，例如第一次 `join` 前先匿名登录，或者在 Dashboard 里加一个登录页。
 
-使用 Sign in with Apple 需要付费的 Apple 开发者账号：在 `project.yml` 里给 Kuro 加上 entitlements（`com.apple.developer.applesignin`），并把签名改成你自己的 team。
+使用 Sign in with Apple 需要付费的 Apple 开发者账号：在 `project.yml` 里给 Goof 加上 entitlements（`com.apple.developer.applesignin`），并把签名改成你自己的 team。

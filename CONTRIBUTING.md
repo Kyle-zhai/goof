@@ -1,25 +1,25 @@
 # 参与贡献
 
-谢谢你愿意让 Kuro 变得更好。下面是动手前需要知道的事。
+谢谢你愿意让 Goof 变得更好。下面是动手前需要知道的事。
 
 ## 开发环境
 
 - macOS 14 以上、Xcode 15.3 以上、[XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`）。
-- 运行 `./scripts/bootstrap.sh` 生成 `Kuro.xcodeproj`。工程以 `project.yml` 为准，`.xcodeproj` 不进 git；增删文件后重新运行一次 bootstrap 就行。
+- 运行 `./scripts/bootstrap.sh` 生成 `Goof.xcodeproj`。工程以 `project.yml` 为准，`.xcodeproj` 不进 git；增删文件后重新运行一次 bootstrap 就行。
 - 不需要 Apple 开发者账号，工程默认用本机签名（ad-hoc）。
 
 ## 测试
 
 ```sh
-swift test --package-path Packages/KuroCore
+swift test --package-path Packages/GoofCore
 ```
 
-- 能不依赖 AppKit 的逻辑都放进 `Packages/KuroCore`，并写单元测试。房间判定、白名单、弹幕轨道和消息规则都在那里。
-- 改了界面的话，CI 会运行 `Kuro --snapshot` 把面板、Dashboard 和新手引导渲染成截图，可以在这次 Actions 运行的 artifacts 里下载对比。本地也可以这样运行：
+- 能不依赖 AppKit 的逻辑都放进 `Packages/GoofCore`，并写单元测试。房间判定、白名单、弹幕轨道和消息规则都在那里。
+- 改了界面的话，CI 会运行 `Goof --snapshot` 把面板、Dashboard 和新手引导渲染成截图，可以在这次 Actions 运行的 artifacts 里下载对比。本地也可以这样运行：
 
   ```sh
-  xcodebuild -project Kuro.xcodeproj -scheme Kuro -derivedDataPath build build
-  build/Build/Products/Debug/Kuro.app/Contents/MacOS/Kuro --snapshot
+  xcodebuild -project Goof.xcodeproj -scheme Goof -derivedDataPath build build
+  build/Build/Products/Debug/Goof.app/Contents/MacOS/Goof --snapshot
   ```
 
   截图目录会打印在最后一行。
@@ -28,7 +28,7 @@ swift test --package-path Packages/KuroCore
 
 ## 添加一个应用
 
-Kuro 只为「被人看到在用也无所谓」的工作类应用开房间。
+Goof 只为「被人看到在用也无所谓」的工作类应用开房间。
 
 | 可以加 | 不会加 |
 | --- | --- |
@@ -42,7 +42,7 @@ Kuro 只为「被人看到在用也无所谓」的工作类应用开房间。
    osascript -e 'id of app "Figma"'
    ```
 
-2. 在 [`AppCatalog.swift`](Packages/KuroCore/Sources/KuroCore/AppCatalog.swift) 对应的分类里加一行：
+2. 在 [`AppCatalog.swift`](Packages/GoofCore/Sources/GoofCore/AppCatalog.swift) 对应的分类里加一行：
 
    ```swift
    .init(id: "figma", name: "Figma", category: .design, bundleIDs: ["com.figma.Desktop"], tint: "#A259FF"),
@@ -73,4 +73,4 @@ Kuro 只为「被人看到在用也无所谓」的工作类应用开房间。
 
 ## 接入服务器
 
-想把 Kuro 接到真实后端，请看 [docs/BACKEND.md](docs/BACKEND.md)。如果你做了一个可以复用的实现（比如 Supabase 版），欢迎在 issue 里分享。
+想把 Goof 接到真实后端，请看 [docs/BACKEND.md](docs/BACKEND.md)。如果你做了一个可以复用的实现（比如 Supabase 版），欢迎在 issue 里分享。

@@ -4,7 +4,7 @@
 
 ## 怎么验证的
 
-- [ ] `swift test --package-path Packages/KuroCore` 通过
+- [ ] `swift test --package-path Packages/GoofCore` 通过
 - [ ] 在 Mac 上运行过
 - [ ] 改了界面的话，附上前后截图（CI 的 artifacts 里有自动渲染的截图）
 

@@ -1,106 +1,135 @@
 <p align="center">
-  <img src="docs/images/icon.png" width="112" alt="Kuro icon">
+  <img src="docs/images/logo.png" width="128" alt="Goof icon">
 </p>
 
-<h1 align="center">Kuro</h1>
-
-<p align="center">Live danmaku chat on your Mac with everyone using the same app as you.</p>
+<h1 align="center">Goof</h1>
 
 <p align="center">
-  <a href="README.md">中文</a> ·
-  <a href="#install">Install</a> ·
-  <a href="docs/BACKEND.md">Connect a server</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
+  <b>Someone else is using the same app as you, right now.</b><br>
+  Goof puts you in the same room and lets you chat in danmaku at the corner of your screen.
 </p>
 
 <p align="center">
-  <img src="docs/images/panel-scroll.jpg" width="400" alt="Scrolling danmaku">
-  <img src="docs/images/panel-stack.jpg" width="400" alt="Stacked list">
+  <a href="#how-to-play">How to play</a> ·
+  <a href="#whats-inside">What's inside</a> ·
+  <a href="#download">Download</a> ·
+  <a href="README.md">中文</a>
 </p>
 
-Kuro lives in the menu bar. While you work in Figma it puts you in the Figma room; switch to Xcode and you are in the Xcode room. Messages drift across a small floating panel ("danmaku", like on a livestream) without getting in your way.
+<p align="center">
+  <img src="docs/images/panel-scroll.png" width="400" alt="Scrolling danmaku drifting across the panel">
+  <img src="docs/images/panel-stack.png" width="400" alt="Stacked list growing from the bottom">
+</p>
+
+You are not the only one with Figma open at midnight, or the only one staring at Xcode while it builds. You just can't see each other.
+
+Goof lives in your Mac's menu bar. Whatever app you switch to, it takes you to that app's room: people in Figma are in the Figma room, people in Claude are in the Claude room. Messages drift across a small floating panel ("danmaku", like the comments that fly across a livestream) without getting in your way.
 
 > [!NOTE]
-> This repository is the **client**. It ships without a server or database. Until you connect one, Kuro runs in demo mode: the people and messages in each room are simulated on your Mac, and the UI says so. Implement the `ChatService` protocol to plug in your own backend; see [docs/BACKEND.md](docs/BACKEND.md). The UI is in Chinese for now.
+> The UI is in Chinese for now.
 
-## Features
+## How to play
 
-- **One room per app.** Only apps you switch on put you in a room. Editions share a room (VS Code and VS Code Insiders, IntelliJ Ultimate and Community).
-- **Online means actually using it.** The app has to be frontmost and you have to be typing or moving the mouse. Switching away keeps your seat for 45 seconds; locking the screen or sleeping leaves right away.
-- **Two styles.** Livestream-style messages flying right to left, or a tidy list growing from the bottom.
-- **Never steals focus.** Typing in the panel keeps you in the app you were using. Collapse the panel to a capsule with an unread count, tune its background, or pause Kuro for a while.
-- **⌃⌥⌘K to chat from anywhere**, Esc to go back to your app.
-- **Hover to pause** the danmaku; right-click a message to report, block or copy it.
-- **Anonymous or named.** Anonymous messages show a random alias such as "匿名 · 橘猫·3f2" that changes per room and per day.
-- **A livestream-style profile**: nickname, username, avatar, bio and accent color.
-- **Kept out of screen sharing and recordings**: people in your meeting don't see the panel, while you still do.
-- Launch at login, multiple displays, dark mode and input methods are all handled. Scrolling runs on Core Animation, so an idle panel uses no CPU.
+1. **Pick a few apps.** The first time you open Goof, tick the apps you are happy to "join a room" from, like Claude, Figma or VS Code. Goof ignores every app you leave unticked.
+2. **Switch to one and you're in.** Stay in a ticked app for 3 seconds and the floating panel appears, showing which room you are in and how many people are online. As you walk in, the latest messages replay faintly, so you can catch up on what people are talking about.
+3. **Say something.** Type in the panel and press Return: your message flies across the screen of everyone in the room. Press <kbd>⌃</kbd> <kbd>⌥</kbd> <kbd>⌘</kbd> <kbd>K</kbd> in any app to start typing right away, and <kbd>Esc</kbd> to get back to what you were doing.
+4. **Switch away and you leave.** Pop out to look something up and you keep your seat for 45 seconds. Locking the screen or closing the lid leaves right away, and if you step away (no keyboard or mouse for 2 minutes by default), you stop counting as online.
+
+### Tips
+
+| To | Do this |
+| --- | --- |
+| Read a message before it flies off | Hover over it and it stops |
+| Report, block or copy | Right-click the message |
+| Switch between anonymous and named | Click the mask button left of the input field |
+| Move or resize the panel | Drag the title bar or the messages; drag the bottom-right corner |
+| Tuck the panel away | Click ⌄ in the title bar: the panel shrinks into a small capsule with an unread count |
+| Get some quiet | Menu bar › Pause Goof: 30 minutes, 1 hour, the rest of today, or until you resume |
+| Find a lost panel | Dashboard › 弹幕外观 (Appearance) › 重置位置 (Reset position) |
+
+## What's inside
+
+### Two danmaku styles
+
+**Scrolling** works like a livestream: messages drift from right to left in lanes that never overlap. **Stacked** lines messages up from the bottom, for when you want to read every one. Switch between them from the menu bar at any time, and tune the speed, the font size and how solid the panel's background is.
 
 <p align="center">
-  <img src="docs/images/dashboard.jpg" width="760" alt="Dashboard">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-appearance-dark.png">
+    <img src="docs/images/dashboard-appearance.png" width="820" alt="Appearance settings: style, scrolling speed, font size and panel background">
+  </picture>
 </p>
+
+### A profile like a streamer's
+
+A display name, a username, an avatar, a one-line bio and an accent color (used for your name and avatar ring). That is what people see next to your messages.
+
+When you'd rather stay low-key, post anonymously, which is the default. You then get a random name like 「匿名 · 橘猫·3f2」 (Anonymous · Ginger cat·3f2) that stays the same within a room for the day and changes the next day.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-profile-dark.png">
+    <img src="docs/images/dashboard-profile.png" width="820" alt="Profile: avatar, name, bio and accent color">
+  </picture>
+</p>
+
+### 36 app rooms
+
+In five groups, AI, code, design, office and creative: Claude, ChatGPT, VS Code, Cursor, Xcode, Terminal, Figma, Photoshop, Notion, Obsidian, Final Cut Pro, Blender and more. Each app is one room, and editions share it (VS Code and VS Code Insiders, IntelliJ Ultimate and Community). Every app starts switched off; turn them on one by one in the Dashboard. Missing an app? [Request it](../../issues/new?template=app_request.yml).
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-apps-dark.png">
+    <img src="docs/images/dashboard-apps.png" width="820" alt="Apps: switch each app's room on or off, by group">
+  </picture>
+</p>
+
+### The rhythm of livestream danmaku
+
+- Messages are live. When you join a room, the last 10 minutes (up to 50 messages) replay in a fainter style; after that you only see what's new.
+- Messages only stay around for about 24 hours: this is danmaku, not a chat log.
+- Up to 80 characters per message, one every 3 seconds, and no repeating yourself within 30 seconds, so nobody can flood the room.
+
+### A panel that stays out of your way
+
+<img src="docs/images/panel-capsule.png" width="250" align="right" alt="The panel tucked into a capsule with an unread count">
+
+- It never steals focus: while you type in the panel, you stay in your app.
+- Tuck it into a small capsule that shows how many new messages arrived.
+- It hides itself while you share or record your screen, so nobody in the meeting sees it.
+- The menu bar icon shows how many people are in your room.
+- Multiple displays, dark mode and Chinese input methods all work.
 
 ## Privacy
 
-Kuro reads exactly two things: **which app is frontmost** and **how many seconds since your last keyboard or mouse input**. It never reads window contents, keystrokes or the screen, so it needs no Accessibility or Screen Recording permission.
+Goof knows two things: which app is frontmost, and how long ago you last touched the keyboard or mouse. It doesn't read windows, log keystrokes or capture the screen, so it needs no system permissions.
 
-- Only apps on the built-in list that you switch on create rooms. Browsers, messaging, mail, finance and health apps are not on the list, because being seen using them already says too much.
-- Nobody can see which apps you use; they only see the people in the same room.
-- Apps outside the list are never recorded or sent anywhere.
+- Nobody can see which apps you use. They can only meet you in the same room.
+- Browsers, messaging, email, banking and health apps are not on the list: being seen using one is a leak in itself.
 
-## Install
+## Download
 
-### Download
+Get the latest `Goof-*.zip` from [Releases](../../releases), unzip it and drag Goof.app into Applications. Goof needs macOS 14 or later.
 
-Get the latest `Kuro-*.zip` from [Releases](../../releases), unzip it and drag Kuro.app into Applications.
+The build is not notarized by Apple, so macOS blocks it the first time:
 
-These builds are not notarized, so macOS blocks the first launch:
+- macOS 15 and later: double-click it once, then open System Settings › Privacy & Security and click "Open Anyway" at the bottom.
+- macOS 14: right-click Goof.app in Finder and choose Open.
 
-- macOS 15 and later: open it once, then click "Open Anyway" at the bottom of System Settings › Privacy & Security.
-- macOS 14: right-click Kuro.app in Finder and choose Open.
-
-### Build from source
-
-You need macOS 14+, Xcode 15.3+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen). You do **not** need an Apple Developer account; the project signs to run locally.
+You can also build it yourself with Xcode 15.3 or later. No Apple Developer account needed:
 
 ```sh
 brew install xcodegen
-git clone https://github.com/Kyle-zhai/kuro.git
-cd kuro
-./scripts/bootstrap.sh   # generates Kuro.xcodeproj
-open Kuro.xcodeproj      # pick the Kuro scheme, press ⌘R
+git clone https://github.com/Kyle-zhai/kuro.git && cd kuro
+./scripts/bootstrap.sh && open Goof.xcodeproj   # pick Goof, press ⌘R
 ```
 
-## Connect a server
-
-See [docs/BACKEND.md](docs/BACKEND.md). In short:
-
-1. Write a class that implements [`ChatService`](App/Kuro/Chat/ChatService.swift) and returns `.server(name:)` as its `kind`.
-2. Return it from `ChatServiceFactory.make()`.
-3. Your server enforces rate limits, anonymous aliases, reports and blocks; the guide lists what it must guarantee.
-
-## Project layout
-
-```
-App/Kuro/
-  Activity/       frontmost app, idle and lock detection (NSWorkspace + CGEventSource)
-  Chat/           the ChatService protocol, models and the local demo backend
-  Panel/          the floating panel: scrolling danmaku, stacked list, composer
-  Dashboard/      settings window and first-run onboarding
-  Settings/       local settings and profile
-  System/         global shortcut, launch at login, screenshot rendering
-Packages/KuroCore/  AppKit-free core logic with unit tests: room state machine, app catalog,
-                    danmaku lanes, list pacing, message rules
-docs/               design notes and the backend guide (Chinese)
-```
+> [!NOTE]
+> This repository is the app only, without a server. Until you connect one, Goof runs in demo mode: the people and messages in each room are simulated on your Mac, and the UI marks it 「演示」 (demo). To play with real people, connect your own server as described in [docs/BACKEND.md](docs/BACKEND.md).
 
 ## Contributing
 
-Issues and pull requests are welcome, especially **adding apps to the catalog**. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-
-```sh
-swift test --package-path Packages/KuroCore
-```
+Issues and pull requests are welcome, most of all new apps for the list. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

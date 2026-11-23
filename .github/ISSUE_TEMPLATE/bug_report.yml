@@ -1,5 +1,5 @@
 name: 问题反馈 / Bug report
-description: Kuro 出错了，或者表现和预期不一样
+description: Goof 出错了，或者表现和预期不一样
 labels: [bug]
 body:
   - type: markdown
@@ -25,9 +25,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: Kuro 版本
+      label: Goof 版本
       description: Dashboard › 通用 › 关于
-      placeholder: Kuro 1.0 (1)
+      placeholder: Goof 1.0 (1)
     validations:
       required: true
   - type: input
@@ -50,5 +50,5 @@ body:
     id: crash
     attributes:
       label: 崩溃报告（可选）
-      description: 如果 Kuro 崩溃了，可以在「控制台」App › 崩溃报告里找到以 Kuro 开头的报告，贴前 60 行左右就够了。
+      description: 如果 Goof 崩溃了，可以在「控制台」App › 崩溃报告里找到以 Goof 开头的报告，贴前 60 行左右就够了。
       render: text

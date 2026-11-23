@@ -1,11 +1,11 @@
 name: 添加应用 / App request
-description: 希望 Kuro 为某个应用开房间
+description: 希望 Goof 为某个应用开房间
 labels: [app-request]
 body:
   - type: markdown
     attributes:
       value: |
-        Kuro 只为「被人看到在用也无所谓」的工作类应用开房间。浏览器、聊天和社交、邮件、金融和支付、健康和医疗、约会、密码管理、VPN 类应用不会添加。
+        Goof 只为「被人看到在用也无所谓」的工作类应用开房间。浏览器、聊天和社交、邮件、金融和支付、健康和医疗、约会、密码管理、VPN 类应用不会添加。
 
         也可以直接提 PR，只需要改一行，步骤见 [添加一个应用](https://github.com/Kyle-zhai/kuro/blob/main/CONTRIBUTING.md#adding-an-app)。
   - type: input
