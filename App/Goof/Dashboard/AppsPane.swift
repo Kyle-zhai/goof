@@ -14,6 +14,7 @@ struct AppsPane: View {
             HStack(spacing: 10) {
                 SearchField(text: $query)
                 ChipPicker(options: categoryOptions, selection: $category)
+                    .fixedSize()
             }
 
             let apps = filteredApps
