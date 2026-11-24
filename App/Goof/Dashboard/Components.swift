@@ -218,6 +218,8 @@ struct ChipPicker<Value: Hashable>: View {
                 } label: {
                     Text(option.title)
                         .font(.system(size: 12, weight: selected ? .semibold : .medium))
+                        .lineLimit(1)
+                        .fixedSize()
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .frame(minWidth: 34)

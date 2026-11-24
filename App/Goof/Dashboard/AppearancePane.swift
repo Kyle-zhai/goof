@@ -150,18 +150,18 @@ private struct StyleCard: View {
     }
 
     private static let scrollSamples: [(message: ChatMessage, x: CGFloat, y: CGFloat)] = [
-        (.sample("Afternoon, everyone!", name: "Yuzu", accentHex: "#FF7A85"), 0.5, 12),
-        (.sample("It finally works!!", name: "Leo", accentHex: "#FF9F1C"), 0.08, 36),
-        (.sample("+1", name: "Kiki", accentHex: "#FF6FB5"), 0.72, 36),
-        (.sample("Loving this feature", name: "Kai", accentHex: "#5AC8FA"), 0.3, 60),
-        (.sample("Coffee number three", name: "Momo", accentHex: "#FFB347"), 0.02, 84),
-        (.sample("Same here", name: "Anon Otter·a3f", anonymous: true), 0.66, 84),
+        (.sample("Afternoon, all!", name: "Yuzu", accentHex: "#FF7A85"), 0.04, 12),
+        (.sample("+1", name: "Kiki", accentHex: "#FF6FB5"), 0.68, 12),
+        (.sample("Same here", name: "Anon Otter·a3f", anonymous: true), 0.28, 36),
+        (.sample("It works!!", name: "Leo", accentHex: "#FF9F1C"), 0.06, 60),
+        (.sample("Coffee #3", name: "Momo", accentHex: "#FFB347"), 0.5, 60),
+        (.sample("Loving this feature", name: "Kai", accentHex: "#5AC8FA"), 0.2, 84),
     ]
 
     private static let stackSamples: [ChatMessage] = [
-        .sample("Coffee number three", name: "Momo", accentHex: "#FFB347"),
-        .sample("Afternoon, everyone!", name: "Yuzu", accentHex: "#FF7A85"),
-        .sample("It finally works!!", name: "Leo", accentHex: "#FF9F1C"),
+        .sample("Coffee #3", name: "Momo", accentHex: "#FFB347"),
+        .sample("Afternoon, all!", name: "Yuzu", accentHex: "#FF7A85"),
+        .sample("It works!!", name: "Leo", accentHex: "#FF9F1C"),
         .sample("Loving this feature", name: "Kai", accentHex: "#5AC8FA"),
     ]
 }

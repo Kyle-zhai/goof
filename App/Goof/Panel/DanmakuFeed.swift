@@ -175,7 +175,7 @@ final class DanmakuFeed {
         switch style {
         case .scroll:
             // Irregular gaps between arrivals, like a real room.
-            let gaps: [TimeInterval] = [0.5, 0.35, 0.6, 0.3, 0.55, 0.4, 0.65, 0.35, 0.5, 0.45]
+            let gaps: [TimeInterval] = [0.62, 0.25, 0.78, 0.63, 0.25, 0.34, 0.39, 0.22, 0.36, 0.71]
             var clock = Date()
             var placed: [DanmakuItem] = []
             for (index, message) in messages.enumerated() {
@@ -192,7 +192,7 @@ final class DanmakuFeed {
                                           start: placement.startTime, duration: placement.duration, width: width))
                 clock.addTimeInterval(gaps[index % gaps.count])
             }
-            let now = clock.addingTimeInterval(0.4)
+            let now = clock.addingTimeInterval(0.89)
             items = placed.filter { now.timeIntervalSince($0.start) < $0.duration }
             pausedAt = now
         case .stack:

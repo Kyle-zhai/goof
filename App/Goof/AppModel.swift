@@ -152,14 +152,14 @@ final class AppModel {
 
     /// One line for the menu bar menu and the dashboard sidebar.
     var statusSummary: String {
-        if isPaused { return pauseUntilText.map { "Goof is paused until \($0)" } ?? "Goof is paused" }
+        if isPaused { return pauseUntilText.map { "Paused until \($0)" } ?? "Paused" }
         if let app = currentApp {
-            return isAway ? "\(app.name) room · away" : "\(app.name) room · \(onlineCount) online"
+            return isAway ? "\(app.name) · away" : "\(app.name) · \(onlineCount) online"
         }
-        if let app = pendingApp { return "Joining the \(app.name) room…" }
-        if settings.allowedApps.isEmpty { return "No apps turned on yet" }
-        if let app = frontmostDisabledApp { return "\(app.name) isn't turned on" }
-        return "This app has no room"
+        if let app = pendingApp { return "Joining \(app.name)…" }
+        if settings.allowedApps.isEmpty { return "No apps turned on" }
+        if let app = frontmostDisabledApp { return "\(app.name) is off" }
+        return "No room for this app"
     }
 
     /// "6:30 PM" or "tomorrow, 9:00 AM" in the user's format; nil when paused until resumed.

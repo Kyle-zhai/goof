@@ -18,7 +18,7 @@ enum SnapshotRenderer {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
         let model = makeModel()
-        let panelSize = CGSize(width: 340, height: 220)
+        let panelSize = FloatingPanelController.defaultSize
         let room = "claude"
 
         for style in DanmakuStyle.allCases {
@@ -82,15 +82,15 @@ enum SnapshotRenderer {
 
     private static func messages(room: String) -> [ChatMessage] {
         let lines: [(String, String?, String, Bool, Bool)] = [
-            ("Yuzu", "#FF7A85", "Anyone else getting Claude to fix their résumé?", false, true),
+            ("Yuzu", "#FF7A85", "Claude fixed my résumé lol", false, true),
             ("Momo", "#FFB347", "Artifacts are so good", false, true),
-            ("Anon Otter·a3f", nil, "Who else is chatting with AI at 2am 🙋", false, false),
-            ("Kai", "#5AC8FA", "It actually got my sketch", false, false),
-            ("bugzapper", "#7CD992", "That answer was way too long lol", false, false),
-            ("PixelCat", "#C792EA", "Anyone got a good prompt?", false, false),
+            ("PixelCat", "#C792EA", "Prompt tips, anyone?", false, false),
+            ("Anon Otter·a3f", nil, "Who else is up at 2am 🙋", false, false),
             ("Anon Tabby·3f2", nil, "Hi all, first time here", true, false),
             ("Leo", "#FF9F1C", "Welcome!", false, false),
-            ("Kiki", "#FF6FB5", "Having it translate a contract", false, false),
+            ("Kiki", "#FF6FB5", "Translating a contract", false, false),
+            ("bugzapper", "#7CD992", "tl;dr pls 😅", false, false),
+            ("Kai", "#5AC8FA", "It got my sketch!!", false, false),
             ("nightowl", "#8AB4FF", "+1", false, false),
         ]
         let start = Date().addingTimeInterval(-60)

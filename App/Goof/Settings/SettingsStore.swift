@@ -20,8 +20,8 @@ enum DanmakuStyle: String, CaseIterable, Identifiable, Sendable {
 
     var subtitle: String {
         switch self {
-        case .scroll: "Drifts right to left, like a livestream"
-        case .stack: "Lines up from the bottom, easy to read"
+        case .scroll: "Drifts across like a livestream"
+        case .stack: "Lines up from the bottom"
         }
     }
 
