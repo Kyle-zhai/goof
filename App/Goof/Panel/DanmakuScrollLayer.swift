@@ -251,17 +251,17 @@ enum MessageMenu {
     static func make(for message: ChatMessage, model: AppModel) -> NSMenu {
         let menu = NSMenu()
         if !message.isMine {
-            let report = NSMenuItem(title: "举报", action: nil, keyEquivalent: "")
+            let report = NSMenuItem(title: "Report", action: nil, keyEquivalent: "")
             let reasons = NSMenu()
             for reason in ReportReason.allCases {
                 reasons.addItem(ClosureMenuItem(title: reason.title) { model.report(message, reason: reason) })
             }
             report.submenu = reasons
             menu.addItem(report)
-            menu.addItem(ClosureMenuItem(title: "屏蔽「\(message.displayName)」") { model.block(message) })
+            menu.addItem(ClosureMenuItem(title: "Block \(message.displayName)") { model.block(message) })
             menu.addItem(.separator())
         }
-        menu.addItem(ClosureMenuItem(title: "复制") { model.copy(message) })
+        menu.addItem(ClosureMenuItem(title: "Copy") { model.copy(message) })
         return menu
     }
 }

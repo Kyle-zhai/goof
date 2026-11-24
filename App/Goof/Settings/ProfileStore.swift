@@ -17,12 +17,12 @@ struct LocalProfile: Codable, Equatable, Sendable {
     var validationError: String? {
         // An empty nickname is allowed: it means "always anonymous".
         let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if name.count > Self.maxDisplayName { return "昵称最多 \(Self.maxDisplayName) 个字" }
-        if name.hasPrefix("匿名") { return "昵称不能以「匿名」开头，免得和匿名弹幕混淆" }
+        if name.count > Self.maxDisplayName { return "Names can be up to \(Self.maxDisplayName) characters" }
+        if AnonymousAlias.isReserved(name) { return "Names can't start with “Anon”, so they don't look like anonymous messages" }
         if !username.isEmpty, username.range(of: #"^[A-Za-z0-9_一-鿿]{2,20}$"#, options: .regularExpression) == nil {
-            return "用户名需为 2–20 位字母、数字、下划线或中文"
+            return "Usernames need 2–20 letters, digits or underscores"
         }
-        if bio.count > Self.maxBio { return "简介最多 \(Self.maxBio) 个字" }
+        if bio.count > Self.maxBio { return "Bios can be up to \(Self.maxBio) characters" }
         return nil
     }
 

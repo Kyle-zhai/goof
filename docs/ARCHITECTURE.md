@@ -1,145 +1,145 @@
-# Goof 设计说明
+# How Goof works
 
-Goof 是一个 macOS 菜单栏应用：它知道你此刻在用哪个应用，把你放进「正在用同一个应用的人」的房间，在一个小小的悬浮面板里用弹幕聊天。
+Goof is a macOS menu bar app. It knows which app you're using right now, puts you in a room with everyone else using the same app, and lets you chat in danmaku on a small floating panel.
 
-这个仓库只有客户端。所有和服务器有关的事情都经过 [`ChatService`](../App/Goof/Chat/ChatService.swift) 协议；没有接服务器时，`DemoChatService` 在本机模拟房间，界面会标「演示」。接入方法见 [BACKEND.md](BACKEND.md)。
+This repository is the client only. Everything that involves a server goes through the [`ChatService`](../App/Goof/Chat/ChatService.swift) protocol. Without a server, `DemoChatService` simulates rooms on the Mac and the UI shows a Demo tag. See [BACKEND.md](BACKEND.md) for connecting one.
 
-## 1. 三个界面
+## 1. Three surfaces
 
-| 界面 | 实现 |
+| Surface | Implementation |
 | --- | --- |
-| 菜单栏 | `MenuBarExtra`。显示当前房间和在线人数，可以切换弹幕样式、暂停、打开 Dashboard。应用不在 Dock 里出现（`LSUIElement`）。 |
-| 悬浮面板 | 无边框的 `NSPanel`，带 `.nonactivatingPanel`，浮在所有窗口和全屏应用之上，跟随你切换桌面。可以拖动、缩放，收起成一个显示未读数的小胶囊。 |
-| Dashboard | 普通窗口：应用、个人资料、弹幕外观、隐私与安全、通用五页，第一次启动时先显示三步引导。打开时应用临时出现在 Dock 和 ⌘Tab 里，关掉后回到你之前用的应用。 |
+| Menu bar | `MenuBarExtra`. Shows the current room and online count, and lets you switch the message style, pause Goof and open the Dashboard. The app doesn't appear in the Dock (`LSUIElement`). |
+| Floating panel | A borderless `NSPanel` with `.nonactivatingPanel`. It floats above every window and full-screen app and follows you across Spaces. You can drag and resize it, or collapse it into a small capsule with an unread count. |
+| Dashboard | A regular window with five panes: Apps, Profile, Appearance, Privacy and General. The first launch shows a three-step welcome tour first. While it's open, Goof shows up in the Dock and ⌘Tab; closing it returns you to the app you were using. |
 
-面板是「不激活」的：点进输入框打字时，前台应用仍然是你正在用的那个，所以打字不会把你踢出房间。这是整个检测方案能成立的前提。
+The panel never activates: when you click into the input field and type, the app you're using stays frontmost, so typing doesn't kick you out of the room. The whole detection scheme depends on this.
 
-## 2. 怎么判断「你在用什么」
+## 2. Knowing what you're using
 
-目标：判断准确、不需要任何系统权限、不碰隐私、不来回抖动。
+Goals: accurate, no system permissions, no private data, no flapping.
 
-### 2.1 只读两个信号
+### 2.1 Only two signals
 
-1. **前台应用**：`NSWorkspace.didActivateApplicationNotification` 推送的 bundle id。
-2. **距离上次输入的秒数**：`CGEventSource.secondsSinceLastEventType`，每秒读一次。它只是一个数字，不包含按了什么键。
+1. **The frontmost app**: the bundle id from `NSWorkspace.didActivateApplicationNotification`.
+2. **Seconds since the last input**: `CGEventSource.secondsSinceLastEventType`, read once a second. It's only a number and says nothing about which keys were pressed.
 
-另外，锁屏、睡眠、屏幕关闭、屏保、切换用户都会立刻算作离开。
+On top of that, locking the screen, sleeping, the display turning off, the screen saver and fast user switching all count as leaving right away.
 
-Goof 自己和系统界面（Dock、Spotlight、通知中心、登录窗口等）出现在前台时不算切走，见 `AppCatalog.ignoredBundleIDs`。
+Goof itself and system UI (the Dock, Spotlight, Notification Center, the login window and so on) don't count as switching away when they come to the front; see `AppCatalog.ignoredBundleIDs`.
 
-### 2.2 状态机
+### 2.2 State machine
 
-[`RoomResolver`](../Packages/GoofCore/Sources/GoofCore/RoomResolver.swift) 是纯 Swift 的状态机，输入只有「事件 + 时间」，所以可以完整地单元测试。
+[`RoomResolver`](../Packages/GoofCore/Sources/GoofCore/RoomResolver.swift) is a pure Swift state machine whose only inputs are events and time, so it can be fully unit tested.
 
 ```
-            开启了的应用在前台，并且稳定 3 秒
-  [不在房间] ─────────────────────────────────▶ [在房间 A]
-      ▲                                           │
-      │ 宽限期 45 秒到了                            │ 切走 / 2 分钟没操作
-      │                                           ▼
-      └──────────────────────────────────── [离开中 A]
-                                                  │ 45 秒内回到 A
-                                                  └────────▶ [在房间 A]
+             an app you turned on is in front for 3 seconds
+  [no room] ─────────────────────────────────────────────▶ [in room A]
+      ▲                                                        │
+      │ 45-second grace period ends                            │ switch away / 2 minutes idle
+      │                                                        ▼
+      └──────────────────────────────────────────────── [away from A]
+                                                               │ back to A within 45 seconds
+                                                               └──────────▶ [in room A]
 
-  锁屏、睡眠、暂停 Goof、关掉这个应用的开关：立刻离开
+  Locking the screen, sleeping, pausing Goof or turning the app off: leave right away
 ```
 
-- **防抖 3 秒**：⌘Tab 快速扫过几个应用时，不会进出一串房间。
-- **宽限期 45 秒**：切到别的应用查个东西再回来，你一直在房间里，面板不闪、回放不重载。这段时间你在在线列表里显示为「离开」，面板上有倒计时。
-- **空闲阈值**：默认 2 分钟，可以在 Dashboard 里改成 1、5 或 10 分钟。人走开了，就不算在线。
+- **3-second debounce**: flicking through apps with ⌘Tab doesn't drag you through a string of rooms.
+- **45-second grace period**: pop out to look something up and come back, and you never left. The panel doesn't flicker and the replay doesn't reload. Meanwhile you show as away in presence, and the panel shows a countdown.
+- **Idle threshold**: 2 minutes by default, and 1, 5 or 10 minutes in the Dashboard. If you've stepped away, you don't count as online.
 
-### 2.3 为什么不做得更「聪明」
+### 2.3 Why not be "smarter"
 
-读窗口标题、当前文件或网页地址都需要辅助功能或屏幕录制权限，而且会碰到非常敏感的信息。Goof 的房间粒度就是「应用」，这些都用不上，所以也不申请。
+Reading window titles, the open file or the current URL needs Accessibility or Screen Recording permission, and touches very sensitive information. Goof's rooms are per app, so it needs none of that and doesn't ask.
 
-## 3. 房间和白名单
+## 3. Rooms and the app list
 
-- 房间只来自 [`AppCatalog`](../Packages/GoofCore/Sources/GoofCore/AppCatalog.swift) 里的应用，每个应用有一个稳定的 id（比如 `figma`），这个 id 就是房间 id。
-- 同一个应用的不同版本共用一个房间：VS Code 和 VS Code Insiders、IntelliJ 旗舰版和社区版等，都写在同一个条目的 `bundleIDs` 里。
-- 白名单只收「被人看到在用也无所谓」的工作类应用。浏览器、聊天、邮件、金融、健康类应用不收，测试里也会检查。规则见 [CONTRIBUTING.md](../CONTRIBUTING.md#adding-an-app)。
-- 所有应用默认关闭，用户在引导或 Dashboard 里自己开启。
+- Rooms only come from apps in [`AppCatalog`](../Packages/GoofCore/Sources/GoofCore/AppCatalog.swift). Each app has a stable id (such as `figma`), and that id is the room id.
+- Editions of one app share a room: VS Code and VS Code Insiders, IntelliJ Ultimate and Community and so on are listed in the same entry's `bundleIDs`.
+- The list only takes work apps that nobody minds being seen using. Browsers, messaging, email, finance and health apps are left out, and the tests check this. See the rules in [CONTRIBUTING.md](../CONTRIBUTING.md#adding-an-app).
+- Every app starts off; people turn them on themselves in the welcome tour or the Dashboard.
 
-## 4. 弹幕
+## 4. Danmaku
 
-两种样式随时切换，正在等待显示的消息会带过去。
+You can switch between the two styles at any time, and messages waiting to be shown carry over.
 
-### 4.1 滚动弹幕
+### 4.1 Scrolling
 
-- [`DanmakuLayout`](../Packages/GoofCore/Sources/GoofCore/DanmakuLayout.swift) 分配轨道：所有弹幕速度相同，前一条的尾巴完全进入面板、再留出一点间距后，同一条轨道才放下一条，所以永远不会重叠。轨道都忙时消息排队，队列满了丢掉最旧的，像热闹的直播间一样。
-- 每条弹幕先画成一张位图（`DanmakuBubble`），然后交给 Core Animation 从右移到左（`DanmakuScrollLayer`）。动画在系统的渲染进程里跑，Goof 不需要每帧醒来，空闲时不占 CPU。
-- 鼠标停在弹幕上会冻结所有图层，方便阅读和右键；离开后从原位置继续，轨道的时间也一起顺延。
+- [`DanmakuLayout`](../Packages/GoofCore/Sources/GoofCore/DanmakuLayout.swift) assigns lanes. Every message moves at the same speed, and a lane only takes the next message once the previous one's tail is fully inside the panel plus a small gap, so messages never overlap. When every lane is busy, messages queue up, and a full queue drops the oldest, just like a busy livestream.
+- Each message is first drawn as a bitmap (`DanmakuBubble`), then Core Animation moves it from right to left (`DanmakuScrollLayer`). The animation runs in the system's render server, so Goof doesn't wake up every frame and uses no CPU while idle.
+- Hovering over a message freezes every layer, so you can read it or right-click it. When the pointer leaves, everything continues from where it stopped and the lane timings shift with it.
 
-### 4.2 规整列表
+### 4.2 Stacked
 
-一条条从下往上排，顶部渐隐。[`MessagePacer`](../Packages/GoofCore/Sources/GoofCore/MessagePacer.swift) 控制节奏：平时每 0.35 秒放一条，积压多了加快，避免一大批消息同时跳出来。
+Messages line up from the bottom and fade out at the top. [`MessagePacer`](../Packages/GoofCore/Sources/GoofCore/MessagePacer.swift) sets the rhythm: one message every 0.35 seconds normally, faster when a backlog builds up, so a burst of messages doesn't pop in all at once.
 
-### 4.3 回放和节能
+### 4.3 Replay and power use
 
-- 进入房间时，服务器返回的最近消息以半透明的「回放」样式先过一遍，之后只显示实时消息。
-- 驱动弹幕的定时器只在有东西在动或在排队时运行，安静的房间里不会唤醒 CPU。
+- When you join a room, the recent messages from the server play through first in a translucent replay style; after that only live messages appear.
+- The timer that drives the danmaku only runs while something is moving or queued, so a quiet room doesn't wake the CPU.
 
-## 5. 焦点和键盘
+## 5. Focus and keyboard
 
-- **⌃⌥⌘K**：用 Carbon 的 `RegisterEventHotKey` 注册全局快捷键，不需要辅助功能权限。按下后把光标放进面板的输入框。
-- **Esc**：离开输入框并把焦点还给原来的应用。用中文输入法选字时按 Esc 只会取消选字，不会离开。
-- 面板和 Dashboard 里的 ⌘X、⌘C、⌘V、⌘A、⌘Z 都能正常用（菜单栏应用没有「编辑」菜单，需要自己转发）。
+- **⌃⌥⌘K**: a global shortcut registered with Carbon's `RegisterEventHotKey`, which needs no Accessibility permission. It puts the cursor in the panel's input field.
+- **Esc**: leaves the input field and gives focus back to the app you were using. While you're picking characters in an input method (Chinese, Japanese and so on), Esc only cancels the candidates.
+- ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in the panel and the Dashboard (a menu bar app has no Edit menu, so Goof forwards them itself).
 
-## 6. 数据和隐私
+## 6. Data and privacy
 
-| 数据 | 存在哪 | 会发给服务器吗 |
+| Data | Where it's stored | Sent to the server? |
 | --- | --- | --- |
-| 开启了哪些应用、弹幕外观、空闲阈值、暂停到什么时候 | 本机 `UserDefaults` | 不会 |
-| 当前前台的白名单应用（用来在菜单里提示「在 Figma 里开启弹幕」） | 只在内存里 | 不会 |
-| 个人资料（昵称、用户名、简介、主题色） | 本机 `UserDefaults` | 会，作为公开资料 |
-| 头像 | `~/Library/Application Support/Goof/avatar.png`，256×256 | 会，作为公开资料 |
-| 当前房间 id、在线和离开状态 | 不保存 | 会，这是房间本身 |
-| 发出的弹幕 | 不保存 | 会 |
+| Which apps are on, appearance, idle threshold, pause end time | `UserDefaults` on the Mac | No |
+| The frontmost app when it's on the list but turned off (for the menu's “Turn On Goof for Figma”) | Memory only | No |
+| Profile (name, username, bio, accent color) | `UserDefaults` on the Mac | Yes, as the public profile |
+| Avatar | `~/Library/Application Support/Goof/avatar.png`, 256×256 | Yes, as the public profile |
+| Current room id, online and away status | Not stored | Yes, that's the room itself |
+| Messages you send | Not stored | Yes |
 
-- 不在白名单里的应用，Goof 不记录、也不上报，连「你在用一个不在白名单里的应用」都不会说。
-- 别人看不到你在用哪些应用，只能看到同一个房间里的人。服务器需要遵守的规则见 [BACKEND.md](BACKEND.md#3-服务器必须保证的事)。
-- 「屏幕共享和录屏时隐藏面板」使用 `NSWindow.sharingType = .none`。个别不遵守这个设置的录屏工具仍可能录到面板。
-- Goof 不需要任何权限或 entitlements，默认也没有开启 App Sandbox：没有付费开发者签名时，每次编译出来的签名都不一样，沙盒应用每次更新都会被系统当成「另一个应用」，弹窗询问能不能访问它自己的数据。如果你用自己的 Developer ID 签名发布，可以在 `project.yml` 里加上 `com.apple.security.app-sandbox`、`com.apple.security.network.client`（连接服务器）和 `com.apple.security.files.user-selected.read-only`（选头像）。
+- Goof doesn't record or report apps that aren't on the list. It doesn't even say "you're using an app that isn't on the list".
+- Nobody can see which apps you use; they only see the people in the same room. See the rules a server must follow in [BACKEND.md](BACKEND.md#3-what-the-server-must-guarantee).
+- "Hide the panel when sharing or recording the screen" uses `NSWindow.sharingType = .none`. The odd recording tool that ignores this setting may still capture the panel.
+- Goof needs no permissions or entitlements, and doesn't turn on the App Sandbox by default: without a paid developer signature, every build gets a different signature, so macOS treats each update of a sandboxed app as "another app" and asks whether it may access its own data. If you ship with your own Developer ID, you can add `com.apple.security.app-sandbox`, `com.apple.security.network.client` (to reach the server) and `com.apple.security.files.user-selected.read-only` (to pick an avatar) in `project.yml`.
 
-## 7. 和服务器的接口
+## 7. The server interface
 
-- [`AppModel`](../App/Goof/AppModel.swift) 是唯一调用 `ChatService` 的地方。
-- 进入、离开、离开中、匿名切换、资料更新这几个调用排成一个队列，一个结束才开始下一个（`enqueue`）。快速离开再进入时，服务器看到的顺序不会乱。
-- 服务器通过 `onEvent` 推送新消息、被隐藏的消息和在线列表。客户端按消息 id 去重，所以自己发的消息被广播回来也没关系。
-- 发送前客户端先做长度、空白和频率检查（[`MessageRules`](../Packages/GoofCore/Sources/GoofCore/MessageRules.swift)），但服务器必须自己再检查一遍。
+- [`AppModel`](../App/Goof/AppModel.swift) is the only place that calls `ChatService`.
+- Joining, leaving, going away, switching anonymity and profile updates go through one queue, and each starts only after the previous one finishes (`enqueue`). When you leave and quickly rejoin, the server never sees them out of order.
+- The server pushes new messages, hidden messages and presence through `onEvent`. The client removes duplicates by message id, so it's fine for the user's own messages to be broadcast back.
+- The client checks length, whitespace and rate before sending ([`MessageRules`](../Packages/GoofCore/Sources/GoofCore/MessageRules.swift)), but the server must check again.
 
-## 8. 代码结构
+## 8. Code layout
 
 ```
 App/Goof/
-  GoofApp.swift          菜单栏、应用入口、单实例
-  AppModel.swift         全局状态：房间、在线、通知提示、所有设置的修改入口
-  Activity/              前台应用、空闲和锁屏检测，喂给 RoomResolver
-  Chat/                  ChatService 协议、消息模型、本地演示后端
-  Panel/                 悬浮面板：滚动弹幕、规整列表、输入框、拖动和缩放
-  Dashboard/             设置窗口和首次引导
-  Settings/              本机设置和个人资料
-  Support/               颜色、应用图标缓存、稳定哈希（匿名昵称）
-  System/                全局快捷键、开机启动、编辑快捷键、截图渲染
-Packages/GoofCore/       不依赖 AppKit 的逻辑和单元测试
-  RoomResolver           在线判定状态机
-  AppCatalog             白名单和 bundle id 归类
-  DanmakuLayout          滚动弹幕的轨道分配
-  MessagePacer           规整列表的节奏
-  MessageRules           消息校验和客户端限流
-  PauseDuration          「暂停 Goof」的时长
+  GoofApp.swift          Menu bar, app entry point, single instance
+  AppModel.swift         App state: room, presence, notices, and every settings change
+  Activity/              Frontmost app, idle and lock detection, fed into RoomResolver
+  Chat/                  ChatService protocol, message models, local demo backend
+  Panel/                 Floating panel: scrolling danmaku, stacked list, input, drag and resize
+  Dashboard/             Settings window and welcome tour
+  Settings/              Local settings and profile
+  Support/               Colors, app icon cache, stable hash (anonymous names)
+  System/                Global shortcut, launch at login, edit shortcuts, snapshot rendering
+Packages/GoofCore/       Logic without AppKit, with unit tests
+  RoomResolver           Presence state machine
+  AppCatalog             App list and bundle id matching
+  DanmakuLayout          Lane assignment for scrolling danmaku
+  MessagePacer           Rhythm of the stacked list
+  MessageRules           Message validation and client-side rate limits
+  PauseDuration          How long "Pause Goof" lasts
 ```
 
-工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 从 `project.yml` 生成，`.xcodeproj` 不进 git。不需要 Apple 开发者账号，默认用本机签名。
+The project is generated from `project.yml` by [XcodeGen](https://github.com/yonaskolb/XcodeGen), and the `.xcodeproj` isn't checked in. No Apple Developer account is needed: it signs locally by default.
 
-## 9. 测试和截图
+## 9. Tests and screenshots
 
-- `swift test --package-path Packages/GoofCore` 跑核心逻辑的单元测试。
-- `Goof --snapshot` 用演示数据把面板（两种样式和收起状态）、Dashboard 的每一页（浅色和深色）和引导渲染成 PNG，然后退出。它不碰真实设置，也不连接服务器。
-- CI 在 macOS 上跑测试、编译、渲染截图，并把截图作为 artifacts 上传；改界面时可以下载对比。打 `v*` 标签时，另一个工作流会编译通用二进制并发布到 Releases。
+- `swift test --package-path Packages/GoofCore` runs the unit tests for the core logic.
+- `Goof --snapshot` renders the panel (both styles and collapsed), every Dashboard pane (light and dark) and the welcome tour to PNGs with demo data, then quits. It doesn't touch real settings or connect to a server.
+- CI runs the tests, builds the app and renders the screenshots on macOS, then uploads them as artifacts, so UI changes can be compared. Pushing a `v*` tag runs another workflow that builds a universal binary and publishes it to Releases.
 
-## 10. 之后可以做的
+## 10. What's next
 
-- 英文界面（文字目前都写在代码里，需要先抽成 String Catalog）。
-- Developer ID 签名、公证和自动更新（例如 Sparkle），这样下载的版本不会被系统拦。
-- 一个可以直接部署的参考后端。
-- VoiceOver 和键盘导航的完整支持。
+- Other languages: UI text is written in code for now, so it needs to move into a String Catalog first.
+- Developer ID signing, notarization and automatic updates (for example with Sparkle), so downloads aren't blocked by macOS.
+- A reference backend you can deploy as is.
+- Full VoiceOver and keyboard navigation support.

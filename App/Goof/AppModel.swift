@@ -13,8 +13,8 @@ final class AppModel {
 
             var title: String {
                 switch self {
-                case .openProfile: "去设置"
-                case .openApps: "打开 Dashboard"
+                case .openProfile: "Set Name"
+                case .openApps: "Open Dashboard"
                 }
             }
         }
@@ -152,24 +152,21 @@ final class AppModel {
 
     /// One line for the menu bar menu and the dashboard sidebar.
     var statusSummary: String {
-        if isPaused { return pauseUntilText.map { "Goof 已暂停，\($0)恢复" } ?? "Goof 已暂停" }
+        if isPaused { return pauseUntilText.map { "Paused until \($0)" } ?? "Paused" }
         if let app = currentApp {
-            return isAway ? "\(app.name) 房间 · 离开中" : "\(app.name) 房间 · \(onlineCount) 人在线"
+            return isAway ? "\(app.name) · away" : "\(app.name) · \(onlineCount) online"
         }
-        if let app = pendingApp { return "正在进入 \(app.name) 房间…" }
-        if settings.allowedApps.isEmpty { return "还没有开启任何应用" }
-        if let app = frontmostDisabledApp { return "\(app.name) 还没开启弹幕" }
-        return "当前应用没有房间"
+        if let app = pendingApp { return "Joining \(app.name)…" }
+        if settings.allowedApps.isEmpty { return "No apps turned on" }
+        if let app = frontmostDisabledApp { return "\(app.name) is off" }
+        return "No room for this app"
     }
 
-    /// "18:30 " or "明天 09:00 ", nil when paused until resumed.
+    /// "6:30 PM" or "tomorrow, 9:00 AM" in the user's format; nil when paused until resumed.
     var pauseUntilText: String? {
         guard let until = settings.pausedUntil, until != .distantFuture else { return nil }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "HH:mm"
-        let time = formatter.string(from: until)
-        return Calendar.current.isDateInToday(until) ? "\(time) " : "明天 \(time) "
+        let time = until.formatted(date: .omitted, time: .shortened)
+        return Calendar.current.isDateInToday(until) ? time : "tomorrow, \(time)"
     }
 
     var menuBarSymbol: String {
@@ -327,7 +324,7 @@ final class AppModel {
         Task {
             do {
                 try await chat.report(message, reason: reason)
-                show(info: "已举报，感谢反馈")
+                show(info: "Reported. Thanks for letting us know.")
             } catch {
                 show(error)
             }
@@ -342,7 +339,7 @@ final class AppModel {
             do {
                 try await chat.block(authorOf: message)
                 await refreshBlocked()
-                show(info: "已屏蔽「\(message.displayName)」，可以在 Dashboard 里解除")
+                show(info: "Blocked \(message.displayName). You can unblock them in the Dashboard.")
             } catch {
                 show(error)
             }
@@ -374,7 +371,7 @@ final class AppModel {
 
     func setPostAnonymously(_ anonymous: Bool) {
         if !anonymous, !profile.hasNickname {
-            return show(Notice(text: "先设置一个昵称，才能实名发言", action: .openProfile))
+            return show(Notice(text: "Set a name first to post as yourself", action: .openProfile))
         }
         let before = postsAnonymously
         settings.postAnonymously = anonymous
@@ -421,7 +418,7 @@ final class AppModel {
     func refreshLaunchAtLogin() {
         launchAtLogin = LaunchAtLogin.isEnabled
         if LaunchAtLogin.needsApproval {
-            launchAtLoginMessage = "需要在「系统设置 › 通用 › 登录项」里允许 Goof"
+            launchAtLoginMessage = "Allow Goof in System Settings › General › Login Items"
         }
     }
 
@@ -437,7 +434,7 @@ final class AppModel {
         do {
             hotKey = try GlobalHotKey(.composeShortcut) { [weak self] in self?.focusComposer() }
         } catch {
-            hotKeyProblem = "这个快捷键被其他应用占用了"
+            hotKeyProblem = "Another app is already using this shortcut"
         }
     }
 
@@ -633,21 +630,21 @@ enum DashboardPane: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .apps: "应用"
-        case .profile: "个人资料"
-        case .appearance: "弹幕外观"
-        case .privacy: "隐私与安全"
-        case .general: "通用"
+        case .apps: "Apps"
+        case .profile: "Profile"
+        case .appearance: "Appearance"
+        case .privacy: "Privacy"
+        case .general: "General"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .apps: "选择哪些应用会让你进入房间"
-        case .profile: "像直播账号一样，别人在弹幕里看到的你"
-        case .appearance: "面板里的弹幕怎么显示，改动会立刻生效"
-        case .privacy: "匿名、在线判定和屏蔽列表"
-        case .general: "启动、快捷键和关于 Goof"
+        case .apps: "Choose which apps put you in a room"
+        case .profile: "What people see next to your messages, like a streamer's profile"
+        case .appearance: "How messages look in the panel. Changes apply right away"
+        case .privacy: "Anonymity, presence and the people you blocked"
+        case .general: "Startup, shortcut and about Goof"
         }
     }
 

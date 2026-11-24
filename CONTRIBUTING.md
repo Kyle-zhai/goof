@@ -1,76 +1,76 @@
-# 参与贡献
+# Contributing
 
-谢谢你愿意让 Goof 变得更好。下面是动手前需要知道的事。
+Thanks for helping make Goof better. Here's what to know before you start.
 
-## 开发环境
+## Setup
 
-- macOS 14 以上、Xcode 15.3 以上、[XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`）。
-- 运行 `./scripts/bootstrap.sh` 生成 `Goof.xcodeproj`。工程以 `project.yml` 为准，`.xcodeproj` 不进 git；增删文件后重新运行一次 bootstrap 就行。
-- 不需要 Apple 开发者账号，工程默认用本机签名（ad-hoc）。
+- macOS 14 or later, Xcode 15.3 or later and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+- Run `./scripts/bootstrap.sh` to generate `Goof.xcodeproj`. `project.yml` is the source of truth and the `.xcodeproj` isn't checked in, so run bootstrap again after adding or removing files.
+- No Apple Developer account needed: the project signs locally (ad-hoc) by default.
 
-## 测试
+## Tests
 
 ```sh
 swift test --package-path Packages/GoofCore
 ```
 
-- 能不依赖 AppKit 的逻辑都放进 `Packages/GoofCore`，并写单元测试。房间判定、白名单、弹幕轨道和消息规则都在那里。
-- 改了界面的话，CI 会运行 `Goof --snapshot` 把面板、Dashboard 和新手引导渲染成截图，可以在这次 Actions 运行的 artifacts 里下载对比。本地也可以这样运行：
+- Logic that doesn't need AppKit goes in `Packages/GoofCore`, with unit tests. Room resolution, the app list, danmaku lanes and message rules all live there.
+- If you change the UI, CI runs `Goof --snapshot` to render the panel, the Dashboard and the welcome tour as screenshots. Download them from the run's artifacts to compare. You can also run it locally:
 
   ```sh
   xcodebuild -project Goof.xcodeproj -scheme Goof -derivedDataPath build build
   build/Build/Products/Debug/Goof.app/Contents/MacOS/Goof --snapshot
   ```
 
-  截图目录会打印在最后一行。
+  The last line of output is the screenshot folder.
 
 <a id="adding-an-app"></a>
 
-## 添加一个应用
+## Adding an app
 
-Goof 只为「被人看到在用也无所谓」的工作类应用开房间。
+Goof only has rooms for work apps that nobody minds being seen using.
 
-| 可以加 | 不会加 |
+| Welcome | Won't be added |
 | --- | --- |
-| 开发工具、设计工具、办公和笔记、创作类软件、AI 助手 | 浏览器、聊天和社交、邮件、金融和支付、健康和医疗、约会、密码管理、VPN，以及任何「在用它」本身就会透露隐私的应用 |
+| Developer tools, design tools, productivity and notes, creative apps, AI assistants | Browsers, messaging and social, email, finance and payments, health, dating, password managers, VPNs, and any app where being seen using it gives something private away |
 
-步骤：
+Steps:
 
-1. 查到应用的 bundle id：
+1. Find the app's bundle id:
 
    ```sh
    osascript -e 'id of app "Figma"'
    ```
 
-2. 在 [`AppCatalog.swift`](Packages/GoofCore/Sources/GoofCore/AppCatalog.swift) 对应的分类里加一行：
+2. Add a line under the right category in [`AppCatalog.swift`](Packages/GoofCore/Sources/GoofCore/AppCatalog.swift):
 
    ```swift
    .init(id: "figma", name: "Figma", category: .design, bundleIDs: ["com.figma.Desktop"], tint: "#A259FF"),
    ```
 
-   - `id` 是房间 id：小写字母、数字和短横线。它会存进用户设置、也会发给服务器，所以**发布后不能改名，也不能挪给别的应用用**。
-   - 同一个应用的不同版本（正式版、预览版、社区版）放进同一个 `bundleIDs`，这样它们共用一个房间。
-   - `tint` 是用户没安装这个应用时，图标方块的颜色。
+   - `id` is the room id: lowercase letters, digits and hyphens. It's saved in people's settings and sent to the server, so **once released it can't be renamed or given to another app**.
+   - Put every edition of an app (release, beta, community) in the same `bundleIDs`, so they share one room.
+   - `tint` colors the icon tile when the app isn't installed.
 
-3. 运行测试，它会检查 id 是否唯一、格式和颜色是否正确，以及白名单里没有浏览器或聊天类应用。
-4. 提 PR，写清楚这是什么应用、为什么适合开房间。
+3. Run the tests. They check that ids are unique, that ids and colors are well formed, and that no browser or messaging app is on the list.
+4. Open a PR that says what the app is and why it suits a room.
 
-## 隐私红线
+## Privacy lines
 
-下面这些改动不会被合并：
+These changes won't be merged:
 
-- 读取窗口标题或内容、按键内容、屏幕画面，或者申请辅助功能、屏幕录制等权限。
-- 记录或上传白名单之外的应用信息。
-- 让别人看到某个人在用哪些应用，或者让匿名消息能关联到账号。
+- Reading window titles or contents, keystrokes or the screen, or asking for Accessibility, Screen Recording or similar permissions.
+- Recording or sending anything about apps that aren't on the list.
+- Letting people see which apps someone uses, or tying anonymous messages to an account.
 
-## 代码约定
+## Code style
 
-- Swift 5.10 语言模式。界面用 SwiftUI，确实需要时才用 AppKit（例如悬浮面板、滚动弹幕层、全局快捷键）。
-- 用户能看到的文字目前都是中文，语气平实，像在跟朋友说话。
-- 尽量不引入第三方依赖。
-- 提交信息用英文，祈使句（例如 `Add Sketch to the catalog`）。
-- 一个 PR 只做一件事；改了界面请附上前后截图。
+- Swift 5.10 language mode. SwiftUI for the UI, and AppKit only where it's really needed (the floating panel, the scrolling danmaku layer, the global shortcut).
+- UI text is in English: plain, short and friendly, like talking to a friend.
+- Avoid third-party dependencies.
+- Commit messages in the imperative (for example `Add Sketch to the catalog`).
+- One change per PR. If you change the UI, include before and after screenshots.
 
-## 接入服务器
+## Connecting a server
 
-想把 Goof 接到真实后端，请看 [docs/BACKEND.md](docs/BACKEND.md)。如果你做了一个可以复用的实现（比如 Supabase 版），欢迎在 issue 里分享。
+To connect Goof to a real backend, see [docs/BACKEND.md](docs/BACKEND.md). If you build an implementation others can reuse (say, a Supabase one), share it in an issue.

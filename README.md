@@ -1,133 +1,132 @@
 <p align="center">
-  <img src="docs/images/logo.png" width="128" alt="Goof 图标">
+  <img src="docs/images/logo.png" width="128" alt="Goof icon">
 </p>
 
 <h1 align="center">Goof</h1>
 
 <p align="center">
-  <b>你正在用的这个 App，此刻也有别人在用。</b><br>
-  Goof 把你们放进同一个房间，在屏幕角落一起发弹幕。
+  <b>Someone else is using the same app as you, right now.</b><br>
+  Goof puts you in the same room and lets you chat in danmaku at the corner of your screen.
 </p>
 
 <p align="center">
-  <a href="#怎么玩">怎么玩</a> ·
-  <a href="#里面有什么">里面有什么</a> ·
-  <a href="#下载">下载</a> ·
-  <a href="README.en.md">English</a>
+  <a href="#how-to-play">How to play</a> ·
+  <a href="#whats-inside">What's inside</a> ·
+  <a href="#download">Download</a>
 </p>
 
 <p align="center">
-  <img src="docs/images/panel-scroll.png" width="400" alt="滚动弹幕：弹幕从右往左飘过面板">
-  <img src="docs/images/panel-stack.png" width="400" alt="规整列表：弹幕一条条往上排">
+  <img src="docs/images/panel-scroll.png" width="400" alt="Scrolling messages drifting across the panel">
+  <img src="docs/images/panel-stack.png" width="400" alt="Stacked messages lining up from the bottom">
 </p>
 
-深夜还开着 Figma 的，不止你一个；对着 Xcode 等编译的，也不止你一个。只是平时谁也看不见谁。
+You are not the only one with Figma open at midnight, or the only one staring at Xcode while it builds. You just can't see each other.
 
-Goof 住在 Mac 的菜单栏里。你切到哪个 App，它就带你进那个 App 的房间：开着 Figma 的人在 Figma 房间，开着 Claude 的人在 Claude 房间。房间里的弹幕只在一块小小的悬浮面板里飘过，不挡你干活。
+Goof lives in your Mac's menu bar. Whatever app you switch to, it takes you to that app's room: people in Figma are in the Figma room, people in Claude are in the Claude room. Messages drift across a small floating panel ("danmaku", like the comments that fly across a livestream) without getting in your way.
 
-## 怎么玩
+## How to play
 
-1. **挑几个 App。** 第一次打开时，勾选你愿意「进房间」的 App，比如 Claude、Figma、VS Code。没勾选的 App，Goof 当它不存在。
-2. **切过去，就进房间。** 在勾选过的 App 里待上 3 秒，悬浮面板就会出现，标题栏上写着这是哪个房间、有多少人在线。刚进门时，最近的弹幕会先淡淡地过一遍，让你知道大家在聊什么。
-3. **说句话。** 在面板里打字，回车，你的弹幕就会飘过房间里每个人的屏幕。在任何 App 里按 <kbd>⌃</kbd> <kbd>⌥</kbd> <kbd>⌘</kbd> <kbd>K</kbd> 都能直接开打，按 <kbd>Esc</kbd> 回到手头的事。
-4. **切走，就离开。** 切出去查个东西，45 秒内回来还在房间里。锁屏或合上盖子会立刻离开；人走开了（默认 2 分钟没碰键盘鼠标），也就不算在线了。
+1. **Pick a few apps.** The first time you open Goof, turn on the apps you're happy to be seen in, like Claude, Figma or VS Code. Goof ignores every app you leave off.
+2. **Switch to one and you're in.** Stay in one of those apps for 3 seconds and the floating panel appears, showing which room you're in and how many people are online. As you walk in, the latest messages replay faintly, so you can catch up on what people are talking about.
+3. **Say something.** Type in the panel and press Return: your message flies across the screen of everyone in the room. Press <kbd>⌃</kbd> <kbd>⌥</kbd> <kbd>⌘</kbd> <kbd>K</kbd> in any app to start typing right away, and <kbd>Esc</kbd> to get back to what you were doing.
+4. **Switch away and you leave.** Pop out to look something up and you keep your seat for 45 seconds. Locking the screen or closing the lid leaves right away, and if you step away (no keyboard or mouse for 2 minutes by default), you stop counting as online.
 
-### 小技巧
+### Tips
 
-| 想做的事 | 怎么做 |
+| To | Do this |
 | --- | --- |
-| 看清一条弹幕 | 把鼠标停在上面，它会停下来 |
-| 举报、屏蔽、复制 | 在弹幕上右键 |
-| 切换匿名和实名 | 点输入框左边的面具按钮 |
-| 挪个位置、改个大小 | 拖标题栏或弹幕区域；拖右下角 |
-| 收起面板 | 点标题栏右边的 ⌄，面板缩成一个显示未读数的小胶囊 |
-| 安静一会儿 | 菜单栏 › 暂停 Goof：30 分钟、1 小时、今天剩下的时间，或者直到手动恢复 |
-| 面板找不到了 | Dashboard › 弹幕外观 › 重置位置 |
+| Read a message before it flies off | Hover over it and it stops |
+| Report, block or copy | Right-click the message |
+| Switch between anonymous and named | Click the mask button left of the input field |
+| Move or resize the panel | Drag the title bar or the messages; drag the bottom-right corner |
+| Tuck the panel away | Click ⌄ in the title bar: the panel shrinks into a small capsule with an unread count |
+| Get some quiet | Menu bar › Pause Goof: 30 minutes, 1 hour, the rest of today, or until you resume |
+| Find a lost panel | Dashboard › Appearance › Reset Position |
 
-## 里面有什么
+## What's inside
 
-### 两种弹幕样式
+### Two message styles
 
-**滚动弹幕**像直播间一样从右往左飘，几条轨道互不遮挡。**规整列表**让弹幕一条条从下往上排，适合想把每句话都看清楚的时候。两种样式在菜单栏里随时切换，滚动速度、字号和面板背景的浓淡也都能调。
+**Scrolling** works like a livestream: messages drift from right to left in lanes that never overlap. **Stacked** lines messages up from the bottom, for when you want to read every one. Switch between them from the menu bar at any time, and tune the speed, the text size and how solid the panel's background is.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-appearance-dark.png">
-    <img src="docs/images/dashboard-appearance.png" width="820" alt="弹幕外观设置：样式、滚动速度、字号和面板背景浓度">
+    <img src="docs/images/dashboard-appearance.png" width="820" alt="Appearance settings: style, scrolling speed, text size and panel background">
   </picture>
 </p>
 
-### 像直播间账号一样的你
+### A profile like a streamer's
 
-昵称、用户名、头像、一句话简介和主题色（昵称和头像框的颜色），别人在弹幕里看到的就是这些。
+A name, a username, an avatar, a one-line bio and an accent color (used for your name and avatar ring). That is what people see next to your messages.
 
-想低调的时候就用匿名，这也是默认设置。匿名时你会得到一个像「匿名 · 橘猫·3f2」这样的随机昵称，同一天、同一个房间里保持不变，第二天换一个新的。
+When you'd rather stay low-key, post anonymously, which is the default. You then get a random name like “Anon Tabby·3f2” that stays the same within a room for the day and changes the next day.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-profile-dark.png">
-    <img src="docs/images/dashboard-profile.png" width="820" alt="个人资料：头像、昵称、简介和主题色">
+    <img src="docs/images/dashboard-profile.png" width="820" alt="Profile: avatar, name, bio and accent color">
   </picture>
 </p>
 
-### 36 个 App 房间
+### 36 app rooms
 
-分成 AI、编程、设计、办公、创作五类：Claude、ChatGPT、VS Code、Cursor、Xcode、终端、Figma、Photoshop、Notion、Obsidian、Final Cut Pro、Blender……一个 App 一个房间，VS Code 正式版和 Insiders、IntelliJ 旗舰版和社区版算同一个房间。所有 App 默认关闭，在 Dashboard 里一个个打开。想加新的 App，欢迎[提一个申请](../../issues/new?template=app_request.yml)。
+In five groups, AI, code, design, productivity and creative: Claude, ChatGPT, VS Code, Cursor, Xcode, Terminal, Figma, Photoshop, Notion, Obsidian, Final Cut Pro, Blender and more. Each app is one room, and editions share it (VS Code and VS Code Insiders, IntelliJ Ultimate and Community). Every app starts switched off; turn them on one by one in the Dashboard. Missing an app? [Request it](../../issues/new?template=app_request.yml).
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-apps-dark.png">
-    <img src="docs/images/dashboard-apps.png" width="820" alt="选择应用：按类别开关每个 App 的房间">
+    <img src="docs/images/dashboard-apps.png" width="820" alt="Apps: switch each app's room on or off, by group">
   </picture>
 </p>
 
-### 直播弹幕的节奏
+### The rhythm of livestream danmaku
 
-- 弹幕是实时的。进房间时先回放最近 10 分钟里的弹幕（最多 50 条），颜色淡一些，之后就只有实时的。
-- 弹幕只留 24 小时左右：这是弹幕，不是聊天记录。
-- 每条最多 80 个字，3 秒才能发一条，30 秒内不能重复同一句话，谁也刷不了屏。
+- Messages are live. When you join a room, the last 10 minutes (up to 50 messages) replay in a fainter style; after that you only see what's new.
+- Messages only stay around for about 24 hours: this is danmaku, not a chat log.
+- Up to 80 characters per message, one every 3 seconds, and no repeating yourself within 30 seconds, so nobody can flood the room.
 
-### 一块不打扰你的小面板
+### A panel that stays out of your way
 
-<img src="docs/images/panel-capsule.png" width="250" align="right" alt="收起后的小胶囊，显示未读数">
+<img src="docs/images/panel-capsule.png" width="250" align="right" alt="The panel tucked into a capsule with an unread count">
 
-- 不抢焦点：在面板里打字时，你还停留在原来的 App 里。
-- 可以收起成一个小胶囊，有新弹幕时显示未读数。
-- 屏幕共享和录屏时自动隐藏，开会时别人看不到。
-- 菜单栏图标上能看到当前房间的在线人数。
-- 多显示器、深色模式、中文输入法都照顾到了。
+- It never steals focus: while you type in the panel, you stay in your app.
+- Tuck it into a small capsule that shows how many new messages arrived.
+- It hides itself while you share or record your screen, so nobody in the meeting sees it.
+- The menu bar icon shows how many people are in your room.
+- Works with multiple displays, dark mode and input methods for languages like Chinese and Japanese.
 
-## 隐私
+## Privacy
 
-Goof 只知道两件事：现在最前面的是哪个 App，以及你多久没碰键盘鼠标了。它不读窗口内容、不记录按键、不截屏，所以不需要任何系统权限。
+Goof knows two things: which app is in front, and how long ago you last touched the keyboard or mouse. It doesn't read windows, log keystrokes or capture the screen, so it needs no system permissions.
 
-- 别人看不到你在用哪些 App，只会在同一个房间里遇见你。
-- 浏览器、聊天、邮件、银行、健康这类 App 不在可选范围里：被人知道你在用它们，本身就是一种泄露。
+- Nobody can see which apps you use. They can only meet you in the same room.
+- Browsers, messaging, email, banking and health apps are not on the list: being seen using one is a leak in itself.
 
-## 下载
+## Download
 
-到 [Releases](../../releases) 下载最新的 `Goof-*.zip`，解压后把 Goof.app 拖进「应用程序」文件夹。需要 macOS 14 或更新的系统。
+Get the latest `Goof-*.zip` from [Releases](../../releases), unzip it and drag Goof.app into Applications. Goof needs macOS 14 or later.
 
-这个版本没有经过 Apple 公证，第一次打开会被系统拦下：
+The build is not notarized by Apple, so macOS blocks it the first time:
 
-- macOS 15 及以上：先双击打开一次，再到「系统设置 › 隐私与安全性」底部点「仍要打开」。
-- macOS 14：在 Finder 里右键 Goof.app，选「打开」。
+- macOS 15 and later: double-click it once, then open System Settings › Privacy & Security and click “Open Anyway” at the bottom.
+- macOS 14: right-click Goof.app in Finder and choose Open.
 
-也可以自己从源码构建，需要 Xcode 15.3 以上，不需要 Apple 开发者账号：
+You can also build it yourself with Xcode 15.3 or later. No Apple Developer account needed:
 
 ```sh
 brew install xcodegen
 git clone https://github.com/Kyle-zhai/goof.git && cd goof
-./scripts/bootstrap.sh && open Goof.xcodeproj   # 选 Goof，按 ⌘R
+./scripts/bootstrap.sh && open Goof.xcodeproj   # pick Goof, press ⌘R
 ```
 
 > [!NOTE]
-> 这个仓库只有 App 本身，不带服务器。没接服务器时，Goof 以演示模式运行：房间里的人和弹幕都在你的 Mac 上模拟，界面上会标「演示」。想和真实的人一起玩，按 [docs/BACKEND.md](docs/BACKEND.md) 接上你自己的服务器就行。
+> This repository is the app only, without a server. Until you connect one, Goof runs in demo mode: the people and messages in each room are simulated on your Mac, and the UI marks it Demo. To play with real people, connect your own server as described in [docs/BACKEND.md](docs/BACKEND.md).
 
-## 参与
+## Contributing
 
-欢迎提 issue 和 PR，最欢迎的是往可选列表里加 App，做法见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+Issues and pull requests are welcome, most of all new apps for the list. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## 许可证
+## License
 
 [MIT](LICENSE)

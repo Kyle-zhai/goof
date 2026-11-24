@@ -16,11 +16,11 @@ enum LaunchAtLogin {
                 try service.unregister()
             }
         } catch {
-            return "没能设置开机启动（\(error.localizedDescription)）。把 Goof 拖进「应用程序」文件夹后再试一次"
+            return "Couldn't turn on launch at login (\(error.localizedDescription)). Move Goof to the Applications folder and try again"
         }
         if enabled, service.status == .requiresApproval {
             SMAppService.openSystemSettingsLoginItems()
-            return "请在「系统设置 › 通用 › 登录项」里允许 Goof"
+            return "Allow Goof in System Settings › General › Login Items"
         }
         return nil
     }

@@ -45,24 +45,24 @@ struct OnboardingView: View {
             Spacer(minLength: 30)
             GoofLogo(size: 76)
             VStack(spacing: 8) {
-                Text("和正在用同一个应用的人，一起发弹幕")
+                Text("Chat with everyone using the same app as you")
                     .font(.system(size: 26, weight: .bold))
-                Text("Goof 住在菜单栏里。你在用 Figma，就进 Figma 房间；切到 Xcode，就换到 Xcode 房间。")
+                Text("Goof lives in your menu bar. In Figma, you're in the Figma room. Switch to Xcode and you're in the Xcode room.")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             VStack(alignment: .leading, spacing: 14) {
-                Feature(symbol: "checklist", tint: "#3A86FF", title: "只在你开启的应用里",
-                        text: "只看「当前前台是哪个应用」，不读窗口内容、按键或屏幕，所以不需要任何系统权限。")
-                Feature(symbol: "eye.slash.fill", tint: "#2FBF71", title: "别人看不到你在用什么",
-                        text: "只有同一个房间里的人知道你也在；没开启的应用什么都不上传。")
-                Feature(symbol: "theatermasks.fill", tint: "#FF5A5F", title: "默认匿名",
-                        text: "匿名时别人只看到「匿名 · 橘猫·3f2」这样的随机昵称，每天每个房间都不一样。")
+                Feature(symbol: "checklist", tint: "#3A86FF", title: "Only in apps you turn on",
+                        text: "Goof only checks which app is in front. It never reads windows, keystrokes or the screen, so it needs no permissions.")
+                Feature(symbol: "eye.slash.fill", tint: "#2FBF71", title: "Nobody sees what you use",
+                        text: "Only people in the same room know you're there. Nothing is sent for apps you haven't turned on.")
+                Feature(symbol: "theatermasks.fill", tint: "#FF5A5F", title: "Anonymous by default",
+                        text: "People only see a random name like “Anon Tabby·3f2”, different in every room, every day.")
             }
             .frame(maxWidth: 500)
             if model.isDemo {
-                Label("演示模式：还没有连接服务器，房间里的人和消息是在本机模拟的。", systemImage: "info.circle.fill")
+                Label("Demo mode: no server is connected, so the people and messages are simulated on this Mac.", systemImage: "info.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 12)
@@ -79,9 +79,9 @@ struct OnboardingView: View {
         let list = showAllApps || installed.isEmpty ? AppCatalog.apps : installed
         return VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("选择会让你进入房间的应用")
+                Text("Pick the apps that put you in a room")
                     .font(.system(size: 24, weight: .bold))
-                Text("全部默认关闭。打开之后，只要这个应用在前台、你在操作，就会进入它的房间。之后随时可以在 Dashboard 里改。")
+                Text("They all start off. Once an app is on, you join its room whenever it's in front and you're using it. You can change this any time in the Dashboard.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -95,12 +95,12 @@ struct OnboardingView: View {
                 .padding(2)
             }
             HStack {
-                Text("已开启 \(model.settings.allowedApps.count) 个")
+                Text("\(model.settings.allowedApps.count) turned on")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 Spacer()
                 if !installed.isEmpty, installed.count < AppCatalog.apps.count {
-                    Toggle("也显示没安装的应用", isOn: $showAllApps)
+                    Toggle("Show apps that aren't installed", isOn: $showAllApps)
                         .toggleStyle(.checkbox)
                         .font(.system(size: 12))
                 }
@@ -117,25 +117,25 @@ struct OnboardingView: View {
     private var identity: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("你想怎么出现在弹幕里？")
+                Text("How do you want to show up?")
                     .font(.system(size: 24, weight: .bold))
-                Text("昵称可以不填，不填就只能匿名发言。之后可以在 Dashboard 里设置头像和主题色。")
+                Text("A name is optional. Without one you can only post anonymously. You can add an avatar and accent color later in the Dashboard.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
             }
             Card {
                 VStack(alignment: .leading, spacing: 14) {
-                    LimitedField(label: "昵称", prompt: "例如：阿柚", text: $nickname, limit: LocalProfile.maxDisplayName)
+                    LimitedField(label: "Name", prompt: "e.g. Yuzu", text: $nickname, limit: LocalProfile.maxDisplayName)
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("默认匿名发言").font(.system(size: 13, weight: .medium))
-                            Text(hasNickname ? "面板里随时可以点面具按钮切换" : "没有昵称时只能匿名发言")
+                            Text("Post anonymously by default").font(.system(size: 13, weight: .medium))
+                            Text(hasNickname ? "Switch any time with the mask button in the panel" : "Without a name you can only post anonymously")
                                 .font(.system(size: 11.5))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 12)
                         // Without a nickname you can only post anonymously, so show it as on.
-                        SwitchToggle(label: "默认匿名发言",
+                        SwitchToggle(label: "Post anonymously by default",
                                      isOn: Binding(get: { anonymous || !hasNickname }, set: { anonymous = $0 }))
                             .disabled(!hasNickname)
                     }
@@ -144,7 +144,7 @@ struct OnboardingView: View {
                 .padding(16)
             }
             VStack(alignment: .leading, spacing: 8) {
-                Text("弹幕样式")
+                Text("Message style")
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(.secondary)
                 ChipPicker(options: DanmakuStyle.allCases.map { ChipOption(value: $0, title: $0.title) },
@@ -152,7 +152,7 @@ struct OnboardingView: View {
             }
             HStack(spacing: 10) {
                 Image(systemName: "keyboard").foregroundStyle(.secondary)
-                Text("在任何应用里按 \(KeyCombo.composeShortcut.display) 直接发弹幕，按 Esc 回去。Goof 的图标在屏幕右上角的菜单栏里。")
+                Text("Press \(KeyCombo.composeShortcut.display) in any app to write a message, and Esc to go back. Goof's icon is in the menu bar at the top right of your screen.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -167,9 +167,9 @@ struct OnboardingView: View {
     private var previewMessage: ChatMessage {
         let name = nickname.trimmingCharacters(in: .whitespaces)
         if anonymous || name.isEmpty {
-            return .sample("大家好～", name: "匿名 · 橘猫·3f2", anonymous: true, mine: true)
+            return .sample("Hi everyone!", name: "Anon Tabby·3f2", anonymous: true, mine: true)
         }
-        return .sample("大家好～", name: name, accentHex: model.profile.profile.accentHex, mine: true)
+        return .sample("Hi everyone!", name: name, accentHex: model.profile.profile.accentHex, mine: true)
     }
 
     // MARK: Footer
@@ -186,10 +186,10 @@ struct OnboardingView: View {
             .animation(.spring(response: 0.3), value: step)
             Spacer()
             if step > 0 {
-                Button("上一步") { withAnimation(.easeInOut(duration: 0.25)) { step -= 1 } }
+                Button("Back") { withAnimation(.easeInOut(duration: 0.25)) { step -= 1 } }
                     .controlSize(.large)
             }
-            Button(step < 2 ? (step == 0 ? "开始设置" : "下一步") : "开始使用") {
+            Button(step < 2 ? (step == 0 ? "Get Started" : "Next") : "Start Using Goof") {
                 if step < 2 {
                     withAnimation(.easeInOut(duration: 0.25)) { step += 1 }
                 } else {

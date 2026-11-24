@@ -1,21 +1,21 @@
-name: 功能建议 / Feature request
-description: 想让 Goof 多做点什么
+name: Feature request
+description: Something you'd like Goof to do
 labels: [enhancement]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: 想解决什么问题
-      description: 现在哪里不方便，什么时候会遇到。
+      label: What problem would it solve
+      description: What's inconvenient today, and when you run into it.
     validations:
       required: true
   - type: textarea
     id: idea
     attributes:
-      label: 你的想法
-      description: 希望它怎么做。可以附上草图或者参考的产品。
+      label: Your idea
+      description: How you'd like it to work. Sketches or similar products are welcome.
     validations:
       required: true
   - type: markdown
     attributes:
-      value: 需要读取窗口内容、按键或屏幕，或者会让别人看到某个人在用哪些应用的功能，不会被采纳。
+      value: Features that read window contents, keystrokes or the screen, or that would let people see which apps someone uses, won't be accepted.

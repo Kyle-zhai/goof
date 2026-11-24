@@ -18,11 +18,11 @@ enum SnapshotRenderer {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
         let model = makeModel()
-        let panelSize = CGSize(width: 340, height: 220)
+        let panelSize = FloatingPanelController.defaultSize
         let room = "claude"
 
         for style in DanmakuStyle.allCases {
-            model.applySnapshot(room: room, members: members(128), messages: messages(room: room), style: style,
+            model.applySnapshot(room: room, members: members(128), messages: messages(room: room, style: style), style: style,
                                 panelSize: panelSize)
             render(OnDesktop(size: panelSize) { PanelView() }, model: model, name: "panel-\(style.rawValue)",
                    into: directory, appearance: .darkAqua)
@@ -33,7 +33,7 @@ enum SnapshotRenderer {
         render(OnDesktop(size: FloatingPanelController.collapsedSize) { PanelView() }, model: model, name: "panel-capsule",
                into: directory, appearance: .darkAqua)
 
-        model.applySnapshot(room: room, members: members(128), messages: messages(room: room), style: .scroll,
+        model.applySnapshot(room: room, members: members(128), messages: messages(room: room, style: .scroll), style: .scroll,
                             panelSize: panelSize)
         let dashboardSize = CGSize(width: DashboardWindowController.size.width, height: DashboardWindowController.size.height)
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
@@ -70,7 +70,7 @@ enum SnapshotRenderer {
         let profileDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("GoofSnapshotProfile", isDirectory: true)
         try? FileManager.default.removeItem(at: profileDirectory)
         let profile = ProfileStore(defaults: defaults, directory: profileDirectory)
-        profile.save(LocalProfile(username: "ayou", displayName: "阿柚", bio: "白天画图标，晚上写 Swift", accentHex: "#FF5A5F"))
+        profile.save(LocalProfile(username: "yuzu", displayName: "Yuzu", bio: "Icons by day, Swift by night", accentHex: "#FF5A5F"))
 
         return AppModel(chat: DemoChatService(seed: 7, liveTicks: false), settings: settings, profile: profile,
                         feed: DanmakuFeed(startsTimer: false), isSnapshot: true)
@@ -80,23 +80,30 @@ enum SnapshotRenderer {
         (0..<count).map { RoomMember(id: "m\($0)", displayName: "m\($0)", isAnonymous: $0 % 3 == 0, isAway: $0 % 11 == 5) }
     }
 
-    private static func messages(room: String) -> [ChatMessage] {
-        let lines: [(String, String?, String, Bool, Bool)] = [
-            ("阿柚", "#FF7A85", "有人也在让 Claude 改简历吗", false, true),
-            ("Momo", "#FFB347", "Artifacts 真的好用", false, true),
-            ("匿名 · 水獭·a3f", nil, "深夜还在和 AI 聊天的举个手 🙋", false, false),
-            ("小林", "#5AC8FA", "它居然看懂了我的草图", false, false),
-            ("debug 侠", "#7CD992", "这个回答太长了哈哈", false, false),
-            ("像素猫", "#C792EA", "求一个好用的 prompt", false, false),
-            ("匿名 · 橘猫·3f2", nil, "大家好～第一次来", true, false),
-            ("Leo", "#FF9F1C", "欢迎欢迎", false, false),
-            ("Kiki", "#FF6FB5", "我在让它帮我翻译合同", false, false),
-            ("夜猫子", "#8AB4FF", "+1", false, false),
+    /// The order is tuned so the frozen scrolling frame shows most messages whole.
+    private static func messages(room: String, style: DanmakuStyle) -> [ChatMessage] {
+        var lines: [(String, String?, String, Bool, Bool)] = [
+            ("Yuzu", "#FF7A85", "Claude fixed my résumé lol", false, true),
+            ("Momo", "#FFB347", "Artifacts are so good", false, true),
+            ("PixelCat", "#C792EA", "Prompt tips, anyone?", false, false),
+            ("Anon Otter·a3f", nil, "Who else is up at 2am 🙋", false, false),
+            ("Anon Tabby·3f2", nil, "Hi all, first time here", true, false),
+            ("Leo", "#FF9F1C", "Welcome!", false, false),
+            ("Kiki", "#FF6FB5", "Translating a contract", false, false),
+            ("bugzapper", "#7CD992", "tl;dr pls 😅", false, false),
+            ("Kai", "#5AC8FA", "It got my sketch!!", false, false),
+            ("nightowl", "#8AB4FF", "+1", false, false),
         ]
+        if style == .stack, let mine = lines.firstIndex(where: { $0.3 }) {
+            // The stacked list shows only the newest rows: bring your message and its reply down to them.
+            let pair = Array(lines[mine...mine + 1])
+            lines.removeSubrange(mine...mine + 1)
+            lines.insert(contentsOf: pair, at: lines.count - 2)
+        }
         let start = Date().addingTimeInterval(-60)
         return lines.enumerated().map { index, line in
             let (name, accent, body, mine, replay) = line
-            return ChatMessage(id: UUID(), room: room, body: body, isAnonymous: name.hasPrefix("匿名"), displayName: name,
+            return ChatMessage(id: UUID(), room: room, body: body, isAnonymous: AnonymousAlias.isAlias(name), displayName: name,
                                accentHex: accent, avatarURL: nil, authorKey: name,
                                createdAt: start.addingTimeInterval(Double(index) * 5), isReplay: replay, isMine: mine)
         }

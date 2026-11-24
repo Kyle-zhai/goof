@@ -59,7 +59,7 @@ struct ChatMessage: Identifiable, Equatable, Codable, Sendable {
     let room: String
     let body: String
     let isAnonymous: Bool
-    /// The profile name, or a per-room per-day alias such as "匿名 · 橘猫·3f2".
+    /// The profile name, or a per-room per-day alias such as "Anon Tabby·3f2".
     let displayName: String
     /// Name color chosen by the author (hex). Nil for anonymous messages.
     let accentHex: String?
@@ -109,7 +109,7 @@ struct RoomMember: Identifiable, Hashable, Sendable {
 
 struct BlockedUser: Identifiable, Equatable, Codable, Sendable {
     let id: UUID
-    /// What the user saw when they blocked, e.g. "匿名 · 橘猫·3f2".
+    /// What the user saw when they blocked, e.g. "Anon Tabby·3f2".
     let label: String
     let createdAt: Date
 
@@ -126,12 +126,12 @@ enum ReportReason: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .spam: "垃圾广告 / 刷屏"
-        case .abuse: "辱骂 / 骚扰"
-        case .sexual: "色情内容"
-        case .hate: "仇恨言论"
-        case .privacy: "泄露隐私"
-        case .other: "其他"
+        case .spam: "Spam or flooding"
+        case .abuse: "Abuse or harassment"
+        case .sexual: "Sexual content"
+        case .hate: "Hate speech"
+        case .privacy: "Shares private information"
+        case .other: "Something else"
         }
     }
 }
@@ -182,12 +182,12 @@ enum ChatError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .rateLimited: "发得太快了，歇一下"
-        case .duplicate: "不要重复刷屏哦"
-        case .tooLong(let limit): "最多 \(limit) 个字"
-        case .notInRoom: "当前不在任何房间"
-        case .needsNickname: "先在 Dashboard 里设置昵称，才能实名发言"
-        case .banned: "你的账号已被限制发言"
+        case .rateLimited: "You're sending too fast. Take a breather"
+        case .duplicate: "You just said that"
+        case .tooLong(let limit): "Up to \(limit) characters"
+        case .notInRoom: "You're not in a room"
+        case .needsNickname: "Set a name in the Dashboard to post as yourself"
+        case .banned: "Your account can't post right now"
         case .server(let message): message
         }
     }

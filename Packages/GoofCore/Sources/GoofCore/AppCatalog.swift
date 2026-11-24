@@ -12,10 +12,10 @@ public struct CatalogApp: Sendable, Hashable, Identifiable {
         public var title: String {
             switch self {
             case .ai: "AI"
-            case .code: "开发"
-            case .design: "设计"
-            case .office: "办公"
-            case .creative: "创作"
+            case .code: "Code"
+            case .design: "Design"
+            case .office: "Productivity"
+            case .creative: "Creative"
             }
         }
     }
@@ -60,7 +60,7 @@ public enum AppCatalog {
         .init(id: "webstorm", name: "WebStorm", category: .code, bundleIDs: ["com.jetbrains.WebStorm"], tint: "#07C3F2"),
         .init(id: "goland", name: "GoLand", category: .code, bundleIDs: ["com.jetbrains.goland"], tint: "#3D7BF7"),
         .init(id: "android-studio", name: "Android Studio", category: .code, bundleIDs: ["com.google.android.studio"], tint: "#3DDC84"),
-        .init(id: "terminal", name: "终端", category: .code, bundleIDs: ["com.apple.Terminal"], tint: "#2B2B2B"),
+        .init(id: "terminal", name: "Terminal", category: .code, bundleIDs: ["com.apple.Terminal"], tint: "#2B2B2B"),
         .init(id: "iterm2", name: "iTerm2", category: .code, bundleIDs: ["com.googlecode.iterm2"], tint: "#1D1F21"),
         .init(id: "warp", name: "Warp", category: .code, bundleIDs: ["dev.warp.Warp-Stable"], tint: "#01A4FF"),
         .init(id: "ghostty", name: "Ghostty", category: .code, bundleIDs: ["com.mitchellh.ghostty"], tint: "#3551F3"),

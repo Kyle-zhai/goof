@@ -41,7 +41,7 @@ final class DemoChatService: ChatService {
         let crowd = Self.crowdSize(for: room)
         members = (0..<crowd).map { i in
             let person = Self.people[i % Self.people.count]
-            return RoomMember(id: "demo-\(room)-\(i)", displayName: person.name, isAnonymous: person.name.hasPrefix("匿名"),
+            return RoomMember(id: "demo-\(room)-\(i)", displayName: person.name, isAnonymous: AnonymousAlias.isAlias(person.name),
                               isAway: i % 9 == 4)
         }
         publishMembers()
@@ -129,7 +129,7 @@ final class DemoChatService: ChatService {
             publishMembers()
         } else if roll > 0.94 {
             let person = Self.people.randomElement(using: &rng)!
-            members.append(RoomMember(id: UUID().uuidString, displayName: person.name, isAnonymous: person.name.hasPrefix("匿名"), isAway: false))
+            members.append(RoomMember(id: UUID().uuidString, displayName: person.name, isAnonymous: AnonymousAlias.isAlias(person.name), isAway: false))
             publishMembers()
         }
     }
@@ -138,7 +138,7 @@ final class DemoChatService: ChatService {
         guard self.room == room else { return }
         let person = Self.people.randomElement(using: &rng)!
         let body = Self.replies.randomElement(using: &rng)!
-        let message = ChatMessage(id: UUID(), room: room, body: body, isAnonymous: person.name.hasPrefix("匿名"),
+        let message = ChatMessage(id: UUID(), room: room, body: body, isAnonymous: AnonymousAlias.isAlias(person.name),
                                   displayName: person.name, accentHex: person.accent, avatarURL: nil,
                                   authorKey: person.name, createdAt: Date())
         if blocked[message.authorKey] == nil { onEvent?(.message(message)) }
@@ -149,14 +149,14 @@ final class DemoChatService: ChatService {
         let person = Self.people.randomElement(using: &rng)!
         let lines = Self.lines(for: room)
         return ChatMessage(id: UUID(), room: room, body: lines.randomElement(using: &rng)!,
-                           isAnonymous: person.name.hasPrefix("匿名"), displayName: person.name,
-                           accentHex: person.name.hasPrefix("匿名") ? nil : person.accent, avatarURL: nil,
+                           isAnonymous: AnonymousAlias.isAlias(person.name), displayName: person.name,
+                           accentHex: AnonymousAlias.isAlias(person.name) ? nil : person.accent, avatarURL: nil,
                            authorKey: person.name, createdAt: date)
     }
 
     private func publishMembers() {
         guard let room else { return }
-        let name = anonymous ? myAlias(in: room) : (profile?.displayName ?? "我")
+        let name = anonymous ? myAlias(in: room) : (profile?.displayName ?? "Me")
         let me = RoomMember(id: "me", displayName: name, isAnonymous: anonymous, isAway: away)
         onEvent?(.members(members + [me]))
     }
@@ -171,40 +171,50 @@ final class DemoChatService: ChatService {
     private struct Person { let name: String; let accent: String }
 
     private static let people: [Person] = [
-        .init(name: "阿柚", accent: "#FF7A85"), .init(name: "Momo", accent: "#FFB347"),
-        .init(name: "小林", accent: "#5AC8FA"), .init(name: "debug 侠", accent: "#7CD992"),
-        .init(name: "像素猫", accent: "#C792EA"), .init(name: "Leo", accent: "#FF9F1C"),
-        .init(name: "夜猫子", accent: "#8AB4FF"), .init(name: "Kiki", accent: "#FF6FB5"),
-        .init(name: "Rin", accent: "#4FD1C5"), .init(name: "豆豆", accent: "#F6C453"),
-        .init(name: "匿名 · 水獭·a3f", accent: "#9AA0AE"), .init(name: "匿名 · 柴犬·19c", accent: "#9AA0AE"),
-        .init(name: "匿名 · 狐狸·5e0", accent: "#9AA0AE"), .init(name: "匿名 · 鲸鱼·c71", accent: "#9AA0AE"),
+        .init(name: "Yuzu", accent: "#FF7A85"), .init(name: "Momo", accent: "#FFB347"),
+        .init(name: "Kai", accent: "#5AC8FA"), .init(name: "bugzapper", accent: "#7CD992"),
+        .init(name: "PixelCat", accent: "#C792EA"), .init(name: "Leo", accent: "#FF9F1C"),
+        .init(name: "nightowl", accent: "#8AB4FF"), .init(name: "Kiki", accent: "#FF6FB5"),
+        .init(name: "Rin", accent: "#4FD1C5"), .init(name: "Bean", accent: "#F6C453"),
+        .init(name: "Anon Otter·a3f", accent: "#9AA0AE"), .init(name: "Anon Shiba·19c", accent: "#9AA0AE"),
+        .init(name: "Anon Fox·5e0", accent: "#9AA0AE"), .init(name: "Anon Whale·c71", accent: "#9AA0AE"),
     ]
 
-    private static let replies = ["哈哈哈同感", "+1", "真的！", "我也是我也是", "握手 🤝", "说得对", "顶一下", "加油加油"]
+    private static let replies = ["haha same", "+1", "Right?!", "Me too", "🤝", "So true", "This ↑", "You got this"]
 
-    private static let common = ["大家好～", "今天第三杯咖啡了", "有人一起摸鱼吗 🐟", "下班前再冲一会", "晚上还要开会 😮‍💨",
-                                 "终于搞定了！！", "这个房间好热闹", "周五了冲鸭", "刚升级了新版本", "有没有人在做毕设"]
+    private static let common = ["Hi everyone!", "Coffee number three today", "Anyone else procrastinating? 🙃",
+                                 "One more push before I log off", "Another meeting tonight 😮‍💨", "Finally done!!",
+                                 "Busy room today", "Friday, let's go", "Just updated to the new version",
+                                 "Anyone working on their thesis?"]
 
     private static let byRoom: [String: [String]] = [
-        "claude": ["有人也在让 Claude 改简历吗", "Artifacts 真的好用", "这个回答太长了哈哈", "求一个好用的 prompt",
-                   "我在让它帮我翻译合同", "深夜还在和 AI 聊天的举个手", "它居然看懂了我的草图"],
-        "chatgpt": ["今天的回答有点啰嗦", "语音模式好像变快了", "在用它查资料", "有人用它写周报吗"],
-        "figma": ["Auto Layout 又把我整懵了", "有人推荐一个好看的配色吗", "甲方说再大一点 😮‍💨", "组件库终于整理完了",
-                  "Dev Mode 有人在用吗", "这个渐变好难调", "今天画了 30 个图标"],
-        "vscode": ["TypeScript 报错报到怀疑人生", "这个插件 yyds", "CI 又挂了", "终于跑通了！！", "谁在写 Rust", "格式化快捷键是啥来着"],
-        "cursor": ["Tab 补全今天特别懂我", "让它重构了整个文件", "有人在用 Agent 模式吗", "规则文件写好效率翻倍"],
-        "xcode": ["Preview 又崩了", "SwiftUI 动画调了一下午", "Archive 终于过了", "签名问题谁懂啊", "模拟器好慢"],
-        "terminal": ["git rebase 搞乱了救命", "有人用 tmux 吗", "zsh 主题求推荐", "rm -rf 之前一定要看清楚"],
-        "notion": ["周报写完的举手", "数据库视图好好用", "有人分享一下读书模板吗", "今天的待办清空了 ✨"],
-        "obsidian": ["双链笔记越写越多", "有人用 Canvas 吗", "插件装太多了卡"],
+        "claude": ["Anyone else getting Claude to fix their résumé?", "Artifacts are so good", "That answer was way too long lol",
+                   "Anyone got a good prompt?", "Having it translate a contract", "Who else is chatting with AI at 2am",
+                   "It actually got my sketch"],
+        "chatgpt": ["Answers are a bit wordy today", "Voice mode feels faster", "Using it for research",
+                    "Anyone use it for status reports?"],
+        "figma": ["Auto Layout got me again", "Any good color palette ideas?", "Client says make it bigger 😮‍💨",
+                  "Finally cleaned up the component library", "Anyone using Dev Mode?", "This gradient is so hard to get right",
+                  "Drew 30 icons today"],
+        "vscode": ["These TypeScript errors are breaking me", "This extension is the best", "CI is red again",
+                   "It finally works!!", "Who's writing Rust?", "What's the format shortcut again?"],
+        "cursor": ["Tab completion really gets me today", "Had it refactor the whole file", "Anyone using Agent mode?",
+                   "A good rules file doubles your speed"],
+        "xcode": ["Previews crashed again", "Spent all afternoon on one SwiftUI animation", "Archive finally passed",
+                  "Who actually understands code signing?", "The simulator is so slow"],
+        "terminal": ["Messed up a git rebase, help", "Anyone use tmux?", "zsh theme recommendations?",
+                     "Always look twice before rm -rf"],
+        "notion": ["Hands up if your weekly report is done", "Database views are so handy",
+                   "Anyone want to share a reading template?", "Cleared my to-do list ✨"],
+        "obsidian": ["My linked notes keep growing", "Anyone using Canvas?", "Too many plugins, it's getting slow"],
     ]
 
     private static let byCategory: [CatalogApp.Category: [String]] = [
-        .ai: ["今天又学到新东西了", "AI 写的代码我还得改", "这个模型更新好快"],
-        .code: ["编译通过了但是不对", "代码评审被打回来了", "有人一起结对吗", "这个 bug 我找了两小时"],
-        .design: ["对齐像素强迫症犯了", "字体选了半天", "这一版甲方应该会满意吧"],
-        .office: ["表格公式写不出来", "PPT 还差最后几页", "在赶季度报告"],
-        .creative: ["渲染还要 40 分钟", "这段剪了一下午", "混音调不好", "导出又失败了"],
+        .ai: ["Learned something new again today", "I still have to fix the code it writes", "These models update so fast"],
+        .code: ["It compiles but it's wrong", "Code review sent it back", "Anyone up for pairing?", "Two hours on this bug so far"],
+        .design: ["Nudging pixels again", "Took forever to pick a font", "The client should like this version"],
+        .office: ["Can't get this spreadsheet formula right", "A few more slides to go", "Rushing the quarterly report"],
+        .creative: ["40 more minutes of rendering", "Spent all afternoon on this cut", "Can't get the mix right", "Export failed again"],
     ]
 
     private static func lines(for room: String) -> [String] {

@@ -34,7 +34,7 @@ final class FloatingPanel: NSPanel {
 
 @MainActor
 final class FloatingPanelController {
-    static let defaultSize = NSSize(width: 340, height: 220)
+    static let defaultSize = NSSize(width: 380, height: 220)
     static let collapsedSize = NSSize(width: 200, height: 36)
     static let minSize = NSSize(width: 260, height: 150)
     private static let autosaveName = "GoofFloatingPanel"

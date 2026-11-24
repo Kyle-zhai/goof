@@ -1,13 +1,13 @@
-## 做了什么
+## What changed
 
-<!-- 一两句话说明改了什么、为什么。关联的 issue 写在这里，例如 Closes #12 -->
+<!-- A sentence or two on what you changed and why. Link related issues here, for example Closes #12 -->
 
-## 怎么验证的
+## How you tested it
 
-- [ ] `swift test --package-path Packages/GoofCore` 通过
-- [ ] 在 Mac 上运行过
-- [ ] 改了界面的话，附上前后截图（CI 的 artifacts 里有自动渲染的截图）
+- [ ] `swift test --package-path Packages/GoofCore` passes
+- [ ] Ran it on a Mac
+- [ ] For UI changes, before and after screenshots are attached (CI renders screenshots into the run's artifacts)
 
-## 隐私
+## Privacy
 
-- [ ] 没有读取窗口内容、按键或屏幕，也不会让别人看到某个人在用哪些应用
+- [ ] Doesn't read window contents, keystrokes or the screen, and doesn't let people see which apps someone uses

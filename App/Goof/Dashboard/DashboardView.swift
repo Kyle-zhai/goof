@@ -74,7 +74,7 @@ private struct DashboardSidebar: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text("Goof").font(.system(size: 16, weight: .bold))
-                        if model.isDemo { Tag(text: "演示") }
+                        if model.isDemo { Tag(text: "Demo") }
                     }
                     HStack(spacing: 5) {
                         Circle().fill(statusColor).frame(width: 6, height: 6)
@@ -170,10 +170,10 @@ private struct MeCard: View {
                 AvatarView(image: model.profile.avatar, name: profile.displayName.isEmpty ? "?" : profile.displayName,
                            accent: Color(hex: profile.accentHex) ?? GoofColors.accent, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(profile.displayName.isEmpty ? "还没有昵称" : profile.displayName)
+                    Text(profile.displayName.isEmpty ? "No name yet" : profile.displayName)
                         .font(.system(size: 12, weight: .semibold))
                         .lineLimit(1)
-                    Text(model.postsAnonymously ? "当前匿名发言" : (profile.username.isEmpty ? "实名发言" : "@\(profile.username)"))
+                    Text(model.postsAnonymously ? "Posting anonymously" : (profile.username.isEmpty ? "Posting as yourself" : "@\(profile.username)"))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -186,6 +186,6 @@ private struct MeCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("编辑个人资料")
+        .help("Edit profile")
     }
 }
