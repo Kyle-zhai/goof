@@ -1,0 +1,51 @@
+name: 添加应用 / App request
+description: 希望 Goof 为某个应用开房间
+labels: [app-request]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Goof 只为「被人看到在用也无所谓」的工作类应用开房间。浏览器、聊天和社交、邮件、金融和支付、健康和医疗、约会、密码管理、VPN 类应用不会添加。
+
+        也可以直接提 PR，只需要改一行，步骤见 [添加一个应用](https://github.com/Kyle-zhai/goof/blob/main/CONTRIBUTING.md#adding-an-app)。
+  - type: input
+    id: name
+    attributes:
+      label: 应用名称
+      placeholder: Figma
+    validations:
+      required: true
+  - type: input
+    id: bundle
+    attributes:
+      label: Bundle id
+      description: 在终端运行 `osascript -e 'id of app "Figma"'` 可以查到。正式版、预览版等不同版本请都写上。
+      placeholder: com.figma.Desktop
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: 分类
+      options:
+        - AI
+        - 开发
+        - 设计
+        - 办公
+        - 创作
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 为什么适合开房间
+      description: 用它的大多是什么人，大家在房间里可能聊些什么。
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私
+      options:
+        - label: 被别人看到「我在用这个应用」不会透露隐私
+          required: true

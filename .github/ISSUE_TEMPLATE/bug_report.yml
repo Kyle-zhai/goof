@@ -1,0 +1,54 @@
+name: 问题反馈 / Bug report
+description: Goof 出错了，或者表现和预期不一样
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 谢谢反馈！请尽量写清楚怎么复现。截图里如果有别人的昵称或弹幕，请先打码。
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 你看到了什么，原本以为会怎样。截图或录屏很有帮助。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 在 Dashboard 里开启 Figma
+        2. 切到 Figma，等面板出现
+        3. ……
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Goof 版本
+      description: Dashboard › 通用 › 关于
+      placeholder: Goof 1.0 (1)
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS 版本
+      placeholder: macOS 15.1，Apple 芯片
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: 后端
+      options:
+        - 演示模式（没有接服务器）
+        - 自己接入的服务器
+    validations:
+      required: true
+  - type: textarea
+    id: crash
+    attributes:
+      label: 崩溃报告（可选）
+      description: 如果 Goof 崩溃了，可以在「控制台」App › 崩溃报告里找到以 Goof 开头的报告，贴前 60 行左右就够了。
+      render: text

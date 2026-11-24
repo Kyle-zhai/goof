@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 接入自己的服务器 / Connect a server
+    url: https://github.com/Kyle-zhai/goof/blob/main/docs/BACKEND.md
+    about: ChatService 协议、调用约定，以及服务器必须保证的事。
