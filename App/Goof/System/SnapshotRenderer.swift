@@ -22,7 +22,7 @@ enum SnapshotRenderer {
         let room = "claude"
 
         for style in DanmakuStyle.allCases {
-            model.applySnapshot(room: room, members: members(128), messages: messages(room: room), style: style,
+            model.applySnapshot(room: room, members: members(128), messages: messages(room: room, style: style), style: style,
                                 panelSize: panelSize)
             render(OnDesktop(size: panelSize) { PanelView() }, model: model, name: "panel-\(style.rawValue)",
                    into: directory, appearance: .darkAqua)
@@ -33,7 +33,7 @@ enum SnapshotRenderer {
         render(OnDesktop(size: FloatingPanelController.collapsedSize) { PanelView() }, model: model, name: "panel-capsule",
                into: directory, appearance: .darkAqua)
 
-        model.applySnapshot(room: room, members: members(128), messages: messages(room: room), style: .scroll,
+        model.applySnapshot(room: room, members: members(128), messages: messages(room: room, style: .scroll), style: .scroll,
                             panelSize: panelSize)
         let dashboardSize = CGSize(width: DashboardWindowController.size.width, height: DashboardWindowController.size.height)
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
@@ -80,8 +80,9 @@ enum SnapshotRenderer {
         (0..<count).map { RoomMember(id: "m\($0)", displayName: "m\($0)", isAnonymous: $0 % 3 == 0, isAway: $0 % 11 == 5) }
     }
 
-    private static func messages(room: String) -> [ChatMessage] {
-        let lines: [(String, String?, String, Bool, Bool)] = [
+    /// The order is tuned so the frozen scrolling frame shows most messages whole.
+    private static func messages(room: String, style: DanmakuStyle) -> [ChatMessage] {
+        var lines: [(String, String?, String, Bool, Bool)] = [
             ("Yuzu", "#FF7A85", "Claude fixed my résumé lol", false, true),
             ("Momo", "#FFB347", "Artifacts are so good", false, true),
             ("PixelCat", "#C792EA", "Prompt tips, anyone?", false, false),
@@ -93,6 +94,12 @@ enum SnapshotRenderer {
             ("Kai", "#5AC8FA", "It got my sketch!!", false, false),
             ("nightowl", "#8AB4FF", "+1", false, false),
         ]
+        if style == .stack, let mine = lines.firstIndex(where: { $0.3 }) {
+            // The stacked list shows only the newest rows: bring your message and its reply down to them.
+            let pair = Array(lines[mine...mine + 1])
+            lines.removeSubrange(mine...mine + 1)
+            lines.insert(contentsOf: pair, at: lines.count - 2)
+        }
         let start = Date().addingTimeInterval(-60)
         return lines.enumerated().map { index, line in
             let (name, accent, body, mine, replay) = line
