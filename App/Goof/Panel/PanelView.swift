@@ -53,7 +53,7 @@ private struct ExpandedPanel: View {
                 WindowResizeGrip()
                     .frame(width: 14, height: 14)
                     .padding(2)
-                    .help("拖动调整大小")
+                    .help("Drag to resize")
             }
         }
     }
@@ -82,16 +82,16 @@ private struct PanelHeader: View {
                 .labelStyle(CompactLabelStyle())
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.62))
-                .accessibilityLabel("\(model.onlineCount) 人在线")
+                .accessibilityLabel("\(model.onlineCount) online")
             }
             .contentShape(Rectangle())
-            .overlay { if !model.isSnapshot { WindowDragArea(toolTip: "拖动移动面板") } }
+            .overlay { if !model.isSnapshot { WindowDragArea(toolTip: "Drag to move the panel") } }
 
             let next: DanmakuStyle = model.settings.danmakuStyle == .scroll ? .stack : .scroll
-            HeaderButton(symbol: next.symbol, help: "切换为\(next.title)") {
+            HeaderButton(symbol: next.symbol, help: "Switch to \(next.title)") {
                 model.setStyle(next)
             }
-            HeaderButton(symbol: "chevron.down", help: "收起成小胶囊") {
+            HeaderButton(symbol: "chevron.down", help: "Collapse into a capsule") {
                 model.setCollapsed(true)
             }
         }
@@ -112,13 +112,13 @@ private struct CompactLabelStyle: LabelStyle {
 
 struct DemoTag: View {
     var body: some View {
-        Text("演示")
+        Text("Demo")
             .font(.system(size: 9.5, weight: .semibold))
             .padding(.horizontal, 5)
             .padding(.vertical, 1.5)
             .foregroundStyle(Color(red: 1, green: 0.78, blue: 0.45))
             .background(Capsule().fill(Color(red: 1, green: 0.65, blue: 0.14).opacity(0.18)))
-            .help("没有连接服务器，房间里的人和消息是本地模拟的")
+            .help("No server connected. The people and messages are simulated on this Mac")
     }
 }
 
@@ -128,10 +128,10 @@ private struct AwayBadge: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let seconds = model.graceRemaining(at: context.date).map { Int($0.rounded(.up)) }
-            Text(seconds.map { "离开中 · \($0)s" } ?? "离开中")
+            Text(seconds.map { "Away · \($0)s" } ?? "Away")
                 .font(.system(size: 10, weight: .medium).monospacedDigit())
                 .foregroundStyle(Color(red: 0.96, green: 0.65, blue: 0.14))
-                .help("你切到了别的应用，宽限期结束后会退出房间；回来就继续")
+                .help("You switched to another app. You'll leave the room when the grace period ends, unless you come back")
         }
     }
 }
@@ -189,7 +189,7 @@ private struct DanmakuArea: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if feed.isPaused, feed.waitingCount > 0 {
-                Text("已暂停 · \(feed.waitingCount) 条新弹幕")
+                Text("Paused · \(feed.waitingCount) new")
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2.5)
@@ -225,7 +225,7 @@ private struct EmptyRoomHint: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        Text(model.isJoining ? "正在进入房间…" : "还没人说话，来发第一条吧")
+        Text(model.isJoining ? "Joining the room…" : "It's quiet in here. Say the first word!")
             .font(.system(size: 11.5))
             .foregroundStyle(.white.opacity(0.42))
             .allowsHitTesting(false)
@@ -261,7 +261,7 @@ private struct PanelComposer: View {
                         return .handled
                     }
                     .disabled(!model.isInRoom)
-                    .accessibilityLabel("发弹幕")
+                    .accessibilityLabel("Send")
                 let remaining = MessageRules.maxLength - model.draft.count
                 if remaining < 20 {
                     Text("\(remaining)")
@@ -279,8 +279,8 @@ private struct PanelComposer: View {
     }
 
     private var placeholder: String {
-        if model.isAway { return "离开中，回到应用里就能接着聊" }
-        return model.postsAnonymously ? "匿名发条弹幕…" : "以「\(model.profile.profile.displayName)」发条弹幕…"
+        if model.isAway { return "Away. Go back to the app to keep chatting" }
+        return model.postsAnonymously ? "Say something anonymously…" : "Say something as \(model.profile.profile.displayName)…"
     }
 }
 
@@ -306,8 +306,8 @@ private struct IdentityButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(anonymous ? "匿名发送中（点击切换为实名）" : "实名发送中（点击切换为匿名）")
-        .accessibilityLabel(anonymous ? "匿名发送" : "实名发送")
+        .help(anonymous ? "Posting anonymously (click to post as yourself)" : "Posting as yourself (click to post anonymously)")
+        .accessibilityLabel(anonymous ? "Post anonymously" : "Post as yourself")
     }
 }
 
@@ -355,7 +355,7 @@ private struct PanelCapsule: View {
                     .padding(.vertical, 1)
                     .background(Capsule().fill(GoofColors.accent))
                     .foregroundStyle(.white)
-                    .help("收起后来了 \(model.unreadCount) 条新弹幕")
+                    .help("\(model.unreadCount) new since you collapsed the panel")
             }
             Image(systemName: "person.2.fill").font(.system(size: 9))
                 .foregroundStyle(.white.opacity(0.62))
@@ -370,7 +370,7 @@ private struct PanelCapsule: View {
         .overlay { CapsuleOutline().strokeBorder(Color.white.opacity(0.14), lineWidth: 1) }
         .overlay {
             if !model.isSnapshot {
-                WindowDragArea(toolTip: "点击展开，拖动移动") { model.setCollapsed(false) }
+                WindowDragArea(toolTip: "Click to expand, drag to move") { model.setCollapsed(false) }
             }
         }
         .accessibilityElement(children: .combine)

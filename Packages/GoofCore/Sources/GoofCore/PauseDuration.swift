@@ -11,10 +11,10 @@ public enum PauseDuration: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .thirtyMinutes: "30 分钟"
-        case .oneHour: "1 小时"
-        case .restOfToday: "今天剩下的时间"
-        case .untilResumed: "直到我手动恢复"
+        case .thirtyMinutes: "30 Minutes"
+        case .oneHour: "1 Hour"
+        case .restOfToday: "Rest of Today"
+        case .untilResumed: "Until I Resume"
         }
     }
 

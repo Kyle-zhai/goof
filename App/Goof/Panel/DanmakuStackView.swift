@@ -66,14 +66,14 @@ struct MessageContextMenu: View {
 
     var body: some View {
         if !message.isMine {
-            Menu("举报") {
+            Menu("Report") {
                 ForEach(ReportReason.allCases) { reason in
                     Button(reason.title) { model.report(message, reason: reason) }
                 }
             }
-            Button("屏蔽「\(message.displayName)」") { model.block(message) }
+            Button("Block \(message.displayName)") { model.block(message) }
             Divider()
         }
-        Button("复制") { model.copy(message) }
+        Button("Copy") { model.copy(message) }
     }
 }

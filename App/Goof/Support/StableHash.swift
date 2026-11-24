@@ -17,15 +17,22 @@ enum StableHash {
     }
 }
 
-/// Livestream-style anonymous aliases: "匿名 · 橘猫·3f2".
+/// Livestream-style anonymous aliases: "Anon Tabby·3f2".
 enum AnonymousAlias {
-    static let animals = ["橘猫", "柴犬", "水獭", "企鹅", "狐狸", "熊猫", "海豹", "仓鼠",
-                          "考拉", "树懒", "刺猬", "浣熊", "鲸鱼", "章鱼", "鹦鹉", "羊驼"]
+    /// Every alias starts with this.
+    static let prefix = "Anon "
+    static let animals = ["Tabby", "Shiba", "Otter", "Penguin", "Fox", "Panda", "Seal", "Hamster",
+                          "Koala", "Sloth", "Hedgehog", "Raccoon", "Whale", "Octopus", "Parrot", "Alpaca"]
 
     /// Stable for one seed (for example account + room + day).
     static func make(seed: String) -> String {
         let hash = StableHash.fnv1a(seed)
         let animal = animals[Int(hash % UInt64(animals.count))]
-        return "匿名 · \(animal)·\(StableHash.hex(seed + "#"))"
+        return "\(prefix)\(animal)·\(StableHash.hex(seed + "#"))"
     }
+
+    static func isAlias(_ name: String) -> Bool { name.hasPrefix(prefix) }
+
+    /// Profile names can't look like an alias.
+    static func isReserved(_ name: String) -> Bool { name.lowercased().hasPrefix("anon") }
 }

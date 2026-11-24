@@ -18,7 +18,7 @@ struct AppsPane: View {
 
             let apps = filteredApps
             if apps.isEmpty {
-                Text("没有找到这个应用。Goof 只为白名单里的应用开房间，想加新的可以到 GitHub 提交。")
+                Text("No app found. Goof only has rooms for the apps on its list, and you can suggest new ones on GitHub.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 20)
@@ -32,12 +32,12 @@ struct AppsPane: View {
             }
 
             HStack {
-                Text("已开启 \(model.settings.allowedApps.count) 个应用 · 默认全部关闭，只有你打开的应用才会让你进房间")
+                Text("\(model.settings.allowedApps.count) turned on · Apps start off, and only the ones you turn on put you in a room")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
                 Spacer()
                 if !model.settings.allowedApps.isEmpty {
-                    Button("全部关闭") { model.setApps(Array(model.settings.allowedApps), allowed: false) }
+                    Button("Turn All Off") { model.setApps(Array(model.settings.allowedApps), allowed: false) }
                         .controlSize(.small)
                 }
             }
@@ -49,13 +49,13 @@ struct AppsPane: View {
                         .foregroundStyle(Palette.green)
                         .frame(width: 24)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("浏览器、聊天、邮件、金融、健康类应用不提供房间")
+                        Text("No rooms for browsers, messaging, email, finance or health apps")
                             .font(.system(size: 13, weight: .medium))
-                        Text("这些应用里的内容太私人，「被看到在用它」本身就会泄露信息，所以 Goof 不会把它们放进白名单。")
+                        Text("What you do in them is too personal. Just being seen using one can give something away, so Goof keeps them off the list.")
                             .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Link("想加一个应用？看看怎么提交", destination: GoofLinks.addAnApp)
+                        Link("Missing an app? See how to add it", destination: GoofLinks.addAnApp)
                             .font(.system(size: 11.5, weight: .medium))
                             .padding(.top, 2)
                     }
@@ -66,7 +66,7 @@ struct AppsPane: View {
     }
 
     private var categoryOptions: [ChipOption<CatalogApp.Category?>] {
-        var options = [ChipOption<CatalogApp.Category?>(value: nil, title: "全部")]
+        var options = [ChipOption<CatalogApp.Category?>(value: nil, title: "All")]
         for category in CatalogApp.Category.allCases {
             options.append(ChipOption(value: category, title: category.title))
         }
@@ -100,9 +100,9 @@ private struct NowCard: View {
                 AppTile(app: app, size: 46)
                     .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("你正在 \(app.name) 房间")
+                    Text("You're in the \(app.name) room")
                         .font(.system(size: 16, weight: .bold))
-                    Text((model.isAway ? "离开中 · " : "") + "\(model.onlineCount) 人在线，只有同房间的人能看到你")
+                    Text((model.isAway ? "Away · " : "") + "\(model.onlineCount) online. Only people in this room can see you")
                         .font(.system(size: 12))
                         .opacity(0.88)
                 }
@@ -124,7 +124,7 @@ private struct NowCard: View {
                         .frame(width: 46, height: 46)
                         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.chips))
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(model.isPaused ? "Goof 已暂停" : "当前不在任何房间")
+                        Text(model.isPaused ? "Goof is paused" : "You're not in a room")
                             .font(.system(size: 15, weight: .bold))
                         Text(reason)
                             .font(.system(size: 12))
@@ -133,9 +133,9 @@ private struct NowCard: View {
                     }
                     Spacer()
                     if model.isPaused {
-                        Button("恢复") { model.resume() }
+                        Button("Resume") { model.resume() }
                     } else if let app = model.frontmostDisabledApp {
-                        Button("开启 \(app.name)") { model.setApp(app.id, allowed: true) }
+                        Button("Turn On \(app.name)") { model.setApp(app.id, allowed: true) }
                             .buttonStyle(.borderedProminent)
                     }
                 }
@@ -146,12 +146,12 @@ private struct NowCard: View {
 
     private var reason: String {
         if model.isPaused {
-            return model.pauseUntilText.map { "\($0)自动恢复，在这之前不会进入任何房间" } ?? "在你手动恢复之前，不会进入任何房间"
+            return model.pauseUntilText.map { "Paused until \($0). You won't join any room before then" } ?? "You won't join any room until you resume"
         }
-        if let app = model.pendingApp { return "检测到你在用 \(app.name)，马上进入房间…" }
-        if let app = model.frontmostDisabledApp { return "你刚才在用 \(app.name)，但还没开启它的弹幕" }
-        if model.settings.allowedApps.isEmpty { return "在下面开启你常用的应用，切过去 3 秒后就会进入它的房间" }
-        return "切到一个已开启的应用，3 秒后自动进入它的房间"
+        if let app = model.pendingApp { return "You're using \(app.name). Joining its room…" }
+        if let app = model.frontmostDisabledApp { return "You were just using \(app.name), but it isn't turned on" }
+        if model.settings.allowedApps.isEmpty { return "Turn on the apps you use below. Switch to one and you'll join its room in 3 seconds" }
+        return "Switch to an app you've turned on and you'll join its room in 3 seconds"
     }
 }
 
@@ -172,17 +172,17 @@ private struct AppCard: View {
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                 if here {
-                    Text("● 你在这里 · \(model.onlineCount) 人")
+                    Text("● You're here · \(model.onlineCount) online")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Palette.green)
                 } else {
-                    Text(app.category.title + (installed ? "" : " · 未安装"))
+                    Text(app.category.title + (installed ? "" : " · Not installed"))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 6)
-            SwitchToggle(label: "允许 \(app.name)",
+            SwitchToggle(label: "Allow \(app.name)",
                          isOn: Binding(get: { isOn }, set: { model.setApp(app.id, allowed: $0) }))
         }
         .padding(12)
@@ -198,7 +198,7 @@ private struct AppCard: View {
 
 struct SearchField: View {
     @Binding var text: String
-    var prompt = "搜索应用"
+    var prompt = "Search apps"
 
     var body: some View {
         HStack(spacing: 6) {
@@ -215,7 +215,7 @@ struct SearchField: View {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("清除搜索")
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(.horizontal, 10)

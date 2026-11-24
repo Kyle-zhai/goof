@@ -18,11 +18,11 @@ struct ProfilePane: View {
             Card {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .top, spacing: 12) {
-                        LimitedField(label: "昵称", prompt: "例如：阿柚", text: $draft.displayName,
+                        LimitedField(label: "Name", prompt: "e.g. Yuzu", text: $draft.displayName,
                                      limit: LocalProfile.maxDisplayName)
-                        LimitedField(label: "用户名（可选）", prompt: "例如：ayou_design", text: $draft.username, limit: 20)
+                        LimitedField(label: "Username (optional)", prompt: "e.g. yuzu_design", text: $draft.username, limit: 20)
                     }
-                    LimitedField(label: "一句话简介（可选）", prompt: "介绍一下自己", text: $draft.bio, limit: LocalProfile.maxBio)
+                    LimitedField(label: "Bio (optional)", prompt: "A line about you", text: $draft.bio, limit: LocalProfile.maxBio)
                     AccentPicker(hex: $draft.accentHex)
                 }
                 .padding(16)
@@ -32,9 +32,9 @@ struct ProfilePane: View {
                 HStack(spacing: 10) {
                     footerText
                     Spacer(minLength: 8)
-                    Button("还原") { draft = model.profile.profile }
+                    Button("Revert") { draft = model.profile.profile }
                         .disabled(!hasChanges)
-                    Button("保存") {
+                    Button("Save") {
                         model.saveProfile(draft)
                         draft = model.profile.profile
                         savedAt = Date()
@@ -47,15 +47,15 @@ struct ProfilePane: View {
                 .padding(.vertical, 12)
             }
 
-            SettingsSection(title: "弹幕里的你",
-                            footer: "实名时用你的昵称和主题色；匿名时只显示当天在这个房间里的随机昵称，别人无法知道是你。") {
+            SettingsSection(title: "How you appear",
+                            footer: "Named messages use your name and accent color. Anonymous ones only show today's random name for this room, so nobody can tell it's you.") {
                 VStack(alignment: .leading, spacing: 10) {
-                    PreviewLine(label: "实名", messages: [
-                        .sample("大家好～", name: draft.displayName.isEmpty ? "你的昵称" : draft.displayName,
+                    PreviewLine(label: "Named", messages: [
+                        .sample("Hi everyone!", name: draft.displayName.isEmpty ? "Your name" : draft.displayName,
                                 accentHex: draft.accentHex, mine: true),
                     ])
-                    PreviewLine(label: "匿名", messages: [
-                        .sample("大家好～", name: "匿名 · 橘猫·3f2", anonymous: true, mine: true),
+                    PreviewLine(label: "Anonymous", messages: [
+                        .sample("Hi everyone!", name: "Anon Tabby·3f2", anonymous: true, mine: true),
                     ])
                 }
                 .padding(14)
@@ -75,14 +75,14 @@ struct ProfilePane: View {
             Label(error, systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(Palette.warning)
         } else if let savedAt, Date().timeIntervalSince(savedAt) < 4, !hasChanges {
-            Label("已保存", systemImage: "checkmark.circle.fill")
+            Label("Saved", systemImage: "checkmark.circle.fill")
                 .foregroundStyle(Palette.green)
         } else if draft.displayName.trimmingCharacters(in: .whitespaces).isEmpty {
-            Text("不填昵称也可以，只是只能匿名发言。")
+            Text("A name is optional, but without one you can only post anonymously.")
                 .foregroundStyle(.secondary)
         } else {
-            Text(model.isDemo ? "资料保存在这台 Mac 上。接入服务器后，会作为公开资料给同房间的人看。"
-                              : "保存后，同房间的人会看到新的资料。")
+            Text(model.isDemo ? "Your profile is stored on this Mac. With a server connected, people in your room will see it."
+                              : "Once you save, people in your room see the new profile.")
                 .foregroundStyle(.secondary)
         }
     }
@@ -92,14 +92,14 @@ struct ProfilePane: View {
         panel.allowedContentTypes = [.image]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.message = "选一张图片作为头像，会自动裁成正方形"
-        panel.prompt = "选择"
+        panel.message = "Choose an image for your avatar. It will be cropped to a square."
+        panel.prompt = "Choose"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try model.setAvatar(from: url)
             avatarError = nil
         } catch {
-            avatarError = "这张图片打不开，换一张试试"
+            avatarError = "Couldn't open this image. Try another one."
         }
     }
 }
@@ -123,12 +123,12 @@ private struct ProfileHero: View {
                 Color.clear.frame(width: 72, height: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
-                        Text(draft.displayName.isEmpty ? "还没有昵称" : draft.displayName)
+                        Text(draft.displayName.isEmpty ? "No name yet" : draft.displayName)
                             .font(.system(size: 19, weight: .bold))
                             .lineLimit(1)
-                        Tag(text: "实名时显示", color: .secondary, background: Palette.chips)
+                        Tag(text: "Shown when named", color: .secondary, background: Palette.chips)
                     }
-                    Text(draft.username.isEmpty ? "没有设置用户名" : "@\(draft.username)")
+                    Text(draft.username.isEmpty ? "No username" : "@\(draft.username)")
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                     if !draft.bio.isEmpty {
@@ -143,9 +143,9 @@ private struct ProfileHero: View {
                 VStack(alignment: .trailing, spacing: 6) {
                     HStack(spacing: 8) {
                         if model.profile.avatar != nil {
-                            Button("移除", action: removeAvatar)
+                            Button("Remove", action: removeAvatar)
                         }
-                        Button("更换头像…", action: pickAvatar)
+                        Button("Change Avatar…", action: pickAvatar)
                     }
                     if let avatarError {
                         Text(avatarError).font(.system(size: 11)).foregroundStyle(Palette.warning)
@@ -197,7 +197,7 @@ private struct AccentPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("主题色（昵称和头像框的颜色）")
+            Text("Accent color (your name and avatar ring)")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
             HStack(spacing: 10) {
@@ -209,14 +209,14 @@ private struct AccentPicker: View {
                         AccentSwatch(hex: preset, selected: selected)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("主题色 \(preset)")
+                    .accessibilityLabel("Accent color \(preset)")
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
-                ColorPicker("自定义", selection: Binding(get: { Color(hex: hex) ?? GoofColors.accent },
+                ColorPicker("Custom", selection: Binding(get: { Color(hex: hex) ?? GoofColors.accent },
                                                      set: { hex = $0.hexString }),
                             supportsOpacity: false)
                     .labelsHidden()
-                    .help("自定义颜色")
+                    .help("Custom color")
             }
         }
     }
@@ -251,7 +251,7 @@ private struct PreviewLine: View {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 30, alignment: .leading)
+                .frame(width: 72, alignment: .leading)
             DanmakuPreviewStrip(messages: messages)
         }
     }

@@ -13,15 +13,15 @@ enum DanmakuStyle: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .scroll: "滚动弹幕"
-        case .stack: "规整列表"
+        case .scroll: "Scrolling"
+        case .stack: "Stacked"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .scroll: "像直播一样从右往左飘过，热闹"
-        case .stack: "一条条从下往上排，方便看清每句话"
+        case .scroll: "Drifts right to left, like a livestream"
+        case .stack: "Lines up from the bottom, easy to read"
         }
     }
 
@@ -48,9 +48,9 @@ enum DanmakuFontSize: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .small: "小"
-        case .standard: "标准"
-        case .large: "大"
+        case .small: "Small"
+        case .standard: "Medium"
+        case .large: "Large"
         }
     }
 }

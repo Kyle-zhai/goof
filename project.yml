@@ -3,7 +3,7 @@ options:
   bundleIdPrefix: app.goof
   deploymentTarget:
     macOS: "14.0"
-  developmentLanguage: zh-Hans
+  developmentLanguage: en
   createIntermediateGroups: true
 packages:
   GoofCore:
@@ -25,7 +25,7 @@ targets:
       path: App/Goof/Resources/Info.plist
       properties:
         CFBundleDisplayName: Goof
-        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleDevelopmentRegion: en
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true

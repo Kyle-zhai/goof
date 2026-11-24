@@ -1,17 +1,17 @@
-name: 添加应用 / App request
-description: 希望 Goof 为某个应用开房间
+name: App request
+description: Ask Goof to add a room for an app
 labels: [app-request]
 body:
   - type: markdown
     attributes:
       value: |
-        Goof 只为「被人看到在用也无所谓」的工作类应用开房间。浏览器、聊天和社交、邮件、金融和支付、健康和医疗、约会、密码管理、VPN 类应用不会添加。
+        Goof only has rooms for work apps that nobody minds being seen using. Browsers, messaging and social, email, finance and payments, health, dating, password managers and VPNs won't be added.
 
-        也可以直接提 PR，只需要改一行，步骤见 [添加一个应用](https://github.com/Kyle-zhai/goof/blob/main/CONTRIBUTING.md#adding-an-app)。
+        You can also open a PR yourself. It's a one-line change; see [Adding an app](https://github.com/Kyle-zhai/goof/blob/main/CONTRIBUTING.md#adding-an-app).
   - type: input
     id: name
     attributes:
-      label: 应用名称
+      label: App name
       placeholder: Figma
     validations:
       required: true
@@ -19,33 +19,33 @@ body:
     id: bundle
     attributes:
       label: Bundle id
-      description: 在终端运行 `osascript -e 'id of app "Figma"'` 可以查到。正式版、预览版等不同版本请都写上。
+      description: Run `osascript -e 'id of app "Figma"'` in Terminal to find it. Please list every edition (release, beta and so on).
       placeholder: com.figma.Desktop
     validations:
       required: true
   - type: dropdown
     id: category
     attributes:
-      label: 分类
+      label: Category
       options:
         - AI
-        - 开发
-        - 设计
-        - 办公
-        - 创作
+        - Code
+        - Design
+        - Productivity
+        - Creative
     validations:
       required: true
   - type: textarea
     id: why
     attributes:
-      label: 为什么适合开房间
-      description: 用它的大多是什么人，大家在房间里可能聊些什么。
+      label: Why it suits a room
+      description: Who mostly uses it, and what people in the room might talk about.
     validations:
       required: true
   - type: checkboxes
     id: privacy
     attributes:
-      label: 隐私
+      label: Privacy
       options:
-        - label: 被别人看到「我在用这个应用」不会透露隐私
+        - label: Being seen using this app doesn't give anything private away
           required: true

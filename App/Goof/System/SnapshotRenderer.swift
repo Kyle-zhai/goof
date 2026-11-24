@@ -70,7 +70,7 @@ enum SnapshotRenderer {
         let profileDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("GoofSnapshotProfile", isDirectory: true)
         try? FileManager.default.removeItem(at: profileDirectory)
         let profile = ProfileStore(defaults: defaults, directory: profileDirectory)
-        profile.save(LocalProfile(username: "ayou", displayName: "阿柚", bio: "白天画图标，晚上写 Swift", accentHex: "#FF5A5F"))
+        profile.save(LocalProfile(username: "yuzu", displayName: "Yuzu", bio: "Icons by day, Swift by night", accentHex: "#FF5A5F"))
 
         return AppModel(chat: DemoChatService(seed: 7, liveTicks: false), settings: settings, profile: profile,
                         feed: DanmakuFeed(startsTimer: false), isSnapshot: true)
@@ -82,21 +82,21 @@ enum SnapshotRenderer {
 
     private static func messages(room: String) -> [ChatMessage] {
         let lines: [(String, String?, String, Bool, Bool)] = [
-            ("阿柚", "#FF7A85", "有人也在让 Claude 改简历吗", false, true),
-            ("Momo", "#FFB347", "Artifacts 真的好用", false, true),
-            ("匿名 · 水獭·a3f", nil, "深夜还在和 AI 聊天的举个手 🙋", false, false),
-            ("小林", "#5AC8FA", "它居然看懂了我的草图", false, false),
-            ("debug 侠", "#7CD992", "这个回答太长了哈哈", false, false),
-            ("像素猫", "#C792EA", "求一个好用的 prompt", false, false),
-            ("匿名 · 橘猫·3f2", nil, "大家好～第一次来", true, false),
-            ("Leo", "#FF9F1C", "欢迎欢迎", false, false),
-            ("Kiki", "#FF6FB5", "我在让它帮我翻译合同", false, false),
-            ("夜猫子", "#8AB4FF", "+1", false, false),
+            ("Yuzu", "#FF7A85", "Anyone else getting Claude to fix their résumé?", false, true),
+            ("Momo", "#FFB347", "Artifacts are so good", false, true),
+            ("Anon Otter·a3f", nil, "Who else is chatting with AI at 2am 🙋", false, false),
+            ("Kai", "#5AC8FA", "It actually got my sketch", false, false),
+            ("bugzapper", "#7CD992", "That answer was way too long lol", false, false),
+            ("PixelCat", "#C792EA", "Anyone got a good prompt?", false, false),
+            ("Anon Tabby·3f2", nil, "Hi all, first time here", true, false),
+            ("Leo", "#FF9F1C", "Welcome!", false, false),
+            ("Kiki", "#FF6FB5", "Having it translate a contract", false, false),
+            ("nightowl", "#8AB4FF", "+1", false, false),
         ]
         let start = Date().addingTimeInterval(-60)
         return lines.enumerated().map { index, line in
             let (name, accent, body, mine, replay) = line
-            return ChatMessage(id: UUID(), room: room, body: body, isAnonymous: name.hasPrefix("匿名"), displayName: name,
+            return ChatMessage(id: UUID(), room: room, body: body, isAnonymous: AnonymousAlias.isAlias(name), displayName: name,
                                accentHex: accent, avatarURL: nil, authorKey: name,
                                createdAt: start.addingTimeInterval(Double(index) * 5), isReplay: replay, isMine: mine)
         }

@@ -54,7 +54,7 @@ private struct MenuBarLabel: View {
                 Text("\(model.onlineCount)").monospacedDigit()
             }
         }
-        .accessibilityLabel("Goof，\(model.statusSummary)")
+        .accessibilityLabel("Goof, \(model.statusSummary)")
     }
 }
 
@@ -64,42 +64,42 @@ private struct MenuBarMenu: View {
     var body: some View {
         Text(model.statusSummary)
         if model.isDemo {
-            Text("演示模式：房间里的人和消息是模拟的")
+            Text("Demo mode: the people and messages are simulated")
         }
         if let app = model.frontmostDisabledApp, !model.isPaused {
-            Button("在 \(app.name) 里开启弹幕") { model.setApp(app.id, allowed: true) }
+            Button("Turn On Goof for \(app.name)") { model.setApp(app.id, allowed: true) }
         }
 
         Divider()
 
-        Toggle("显示弹幕面板", isOn: Binding(get: { model.settings.panelEnabled },
+        Toggle("Show Panel", isOn: Binding(get: { model.settings.panelEnabled },
                                          set: { model.setPanelEnabled($0) }))
-        Picker("弹幕样式", selection: Binding(get: { model.settings.danmakuStyle },
+        Picker("Style", selection: Binding(get: { model.settings.danmakuStyle },
                                           set: { model.setStyle($0) })) {
             ForEach(DanmakuStyle.allCases) { style in
                 Text(style.title).tag(style)
             }
         }
-        Button("快速发弹幕（\(KeyCombo.composeShortcut.display)）") { model.focusComposer() }
+        Button("Write a Message (\(KeyCombo.composeShortcut.display))") { model.focusComposer() }
             .disabled(!model.isInRoom)
 
         Divider()
 
         if model.isPaused {
-            Button(model.pauseUntilText.map { "恢复 Goof（原定\($0)恢复）" } ?? "恢复 Goof") { model.resume() }
+            Button(model.pauseUntilText.map { "Resume Goof (paused until \($0))" } ?? "Resume Goof") { model.resume() }
         } else {
-            Menu("暂停 Goof") {
+            Menu("Pause Goof") {
                 ForEach(PauseDuration.allCases) { duration in
                     Button(duration.title) { model.pause(duration) }
                 }
             }
         }
-        Button("打开 Dashboard…") { model.showDashboard() }
+        Button("Open Dashboard…") { model.showDashboard() }
             .keyboardShortcut(",")
 
         Divider()
 
-        Button("退出 Goof") { NSApp.terminate(nil) }
+        Button("Quit Goof") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }

@@ -8,7 +8,7 @@ struct AppearancePane: View {
         let settings = model.settings
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 7) {
-                Text("样式")
+                Text("Style")
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
@@ -20,48 +20,48 @@ struct AppearancePane: View {
                     }
                 }
                 if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, settings.danmakuStyle == .scroll, !model.isSnapshot {
-                    Label("系统开启了「减弱动态效果」，推荐用「规整列表」", systemImage: "figure.walk.motion")
+                    Label("Reduce Motion is on, so Stacked is recommended", systemImage: "figure.walk.motion")
                         .font(.system(size: 11.5))
                         .foregroundStyle(.secondary)
                         .padding(.leading, 4)
                 }
             }
 
-            SettingsSection(title: "细节") {
-                SettingsRow(title: "滚动速度",
-                            subtitle: settings.danmakuStyle == .scroll ? "弹幕每秒移动的距离" : "只在「滚动弹幕」样式下生效") {
-                    ValueSlider(label: "滚动速度",
+            SettingsSection(title: "Details") {
+                SettingsRow(title: "Scrolling speed",
+                            subtitle: settings.danmakuStyle == .scroll ? "How far messages move each second" : "Only applies to the Scrolling style") {
+                    ValueSlider(label: "Scrolling speed",
                                 value: Binding(get: { settings.danmakuSpeed }, set: { model.setSpeed($0) }),
                                 range: 50...160, step: 5) { "\(Int($0))" }
                         .disabled(settings.danmakuStyle != .scroll)
                 }
                 RowDivider()
-                SettingsRow(title: "字号") {
+                SettingsRow(title: "Text size") {
                     ChipPicker(options: DanmakuFontSize.allCases.map { ChipOption(value: $0, title: $0.title) },
                                selection: Binding(get: { settings.fontSize }, set: { model.setFontSize($0) }))
                 }
                 RowDivider()
-                SettingsRow(title: "面板背景浓度", subtitle: "越低越通透，越高越容易看清文字") {
-                    ValueSlider(label: "面板背景浓度",
+                SettingsRow(title: "Panel background", subtitle: "Lower is more see-through, higher is easier to read") {
+                    ValueSlider(label: "Panel background",
                                 value: Binding(get: { settings.panelOpacity }, set: { settings.panelOpacity = $0 }),
                                 range: 0.35...0.9, step: 0.05) { "\(Int(($0 * 100).rounded()))%" }
                 }
                 RowDivider()
-                SettingsRow(title: "进房间时回放最近的弹幕", subtitle: "以较淡的样式显示，让你知道大家刚才在聊什么") {
-                    SwitchToggle(label: "回放最近的弹幕",
+                SettingsRow(title: "Replay recent messages when you join", subtitle: "Shown fainter, so you can catch up on the conversation") {
+                    SwitchToggle(label: "Replay recent messages",
                                  isOn: Binding(get: { settings.replayHistory }, set: { settings.replayHistory = $0 }))
                 }
                 RowDivider()
-                SettingsRow(title: "显示弹幕面板", subtitle: "关掉后只保留菜单栏图标，房间照常进出") {
-                    SwitchToggle(label: "显示弹幕面板",
+                SettingsRow(title: "Show the panel", subtitle: "When off, only the menu bar icon stays. You still join and leave rooms") {
+                    SwitchToggle(label: "Show the panel",
                                  isOn: Binding(get: { settings.panelEnabled }, set: { model.setPanelEnabled($0) }))
                 }
             }
 
-            SettingsSection(title: "面板",
-                            footer: "鼠标停在弹幕上会暂停滚动，方便看清或右键举报；拖动标题栏或弹幕区域可以移动面板，右下角可以调整大小。") {
-                SettingsRow(title: "找不到面板了？", subtitle: "把面板放回屏幕右下角，恢复默认大小") {
-                    Button("重置位置") { model.resetPanelPosition() }
+            SettingsSection(title: "Panel",
+                            footer: "Hover over a message to stop it, so you can read it or right-click to report it. Drag the title bar or the messages to move the panel, and the bottom-right corner to resize it.") {
+                SettingsRow(title: "Can't find the panel?", subtitle: "Moves it back to the bottom-right corner at its default size") {
+                    Button("Reset Position") { model.resetPanelPosition() }
                 }
             }
         }
@@ -150,18 +150,18 @@ private struct StyleCard: View {
     }
 
     private static let scrollSamples: [(message: ChatMessage, x: CGFloat, y: CGFloat)] = [
-        (.sample("大家下午好～", name: "阿柚", accentHex: "#FF7A85"), 0.5, 12),
-        (.sample("终于跑通了！！", name: "Leo", accentHex: "#FF9F1C"), 0.08, 36),
+        (.sample("Afternoon, everyone!", name: "Yuzu", accentHex: "#FF7A85"), 0.5, 12),
+        (.sample("It finally works!!", name: "Leo", accentHex: "#FF9F1C"), 0.08, 36),
         (.sample("+1", name: "Kiki", accentHex: "#FF6FB5"), 0.72, 36),
-        (.sample("这个功能好好用", name: "小林", accentHex: "#5AC8FA"), 0.3, 60),
-        (.sample("今天第三杯咖啡", name: "Momo", accentHex: "#FFB347"), 0.02, 84),
-        (.sample("同感", name: "匿名 · 水獭·a3f", anonymous: true), 0.66, 84),
+        (.sample("Loving this feature", name: "Kai", accentHex: "#5AC8FA"), 0.3, 60),
+        (.sample("Coffee number three", name: "Momo", accentHex: "#FFB347"), 0.02, 84),
+        (.sample("Same here", name: "Anon Otter·a3f", anonymous: true), 0.66, 84),
     ]
 
     private static let stackSamples: [ChatMessage] = [
-        .sample("今天第三杯咖啡", name: "Momo", accentHex: "#FFB347"),
-        .sample("大家下午好～", name: "阿柚", accentHex: "#FF7A85"),
-        .sample("终于跑通了！！", name: "Leo", accentHex: "#FF9F1C"),
-        .sample("这个功能好好用", name: "小林", accentHex: "#5AC8FA"),
+        .sample("Coffee number three", name: "Momo", accentHex: "#FFB347"),
+        .sample("Afternoon, everyone!", name: "Yuzu", accentHex: "#FF7A85"),
+        .sample("It finally works!!", name: "Leo", accentHex: "#FF9F1C"),
+        .sample("Loving this feature", name: "Kai", accentHex: "#5AC8FA"),
     ]
 }
